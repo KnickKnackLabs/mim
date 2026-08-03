@@ -15,6 +15,8 @@
   let canvas: HTMLCanvasElement;
   let cssHeight = 1;
   let cssWidth = 1;
+  let cursorAnchoredZoom = false;
+  let lastWheelZoomAt = -Infinity;
   let pixelRatio = 1;
 
   $: frame = buildFrame(state);
@@ -34,10 +36,20 @@
   });
 
   function handleKeydown(event: KeyboardEvent): void {
+    if (event.key.toLowerCase() === "c") {
+      event.preventDefault();
+      cursorAnchoredZoom = true;
+      return;
+    }
+
     const command = commandForKey(event.key);
     if (!command) return;
     event.preventDefault();
     dispatch(command);
+  }
+
+  function handleKeyup(event: KeyboardEvent): void {
+    if (event.key.toLowerCase() === "c") cursorAnchoredZoom = false;
   }
 
   function handlePointer(event: PointerEvent): void {
@@ -48,20 +60,45 @@
       state.columns,
       state.rows,
       state.zoomDenominator,
+      state.viewX,
+      state.viewY,
     );
     const cursor = cellForPoint(event.clientX, event.clientY, bounds, layout);
     dispatch({ type: "set-cursor", ...cursor });
+  }
+
+  function handleWheel(event: WheelEvent): void {
+    event.preventDefault();
+    if (Math.abs(event.deltaY) < 0.5) return;
+
+    const now = performance.now();
+    if (now - lastWheelZoomAt < 75) return;
+    lastWheelZoomAt = now;
+
+    const bounds = canvas.getBoundingClientRect();
+    const cellSize = Math.min(bounds.width, bounds.height) / state.zoomDenominator;
+    const pixelX = cursorAnchoredZoom ? event.clientX - bounds.left : bounds.width / 2;
+    const pixelY = cursorAnchoredZoom ? event.clientY - bounds.top : bounds.height / 2;
+    dispatch({
+      type: "zoom-at",
+      anchorX: pixelX / cellSize,
+      anchorY: pixelY / cellSize,
+      direction: event.deltaY < 0 ? "in" : "out",
+    });
   }
 </script>
 
 <canvas
   bind:this={canvas}
   aria-label="Interactive GCD and LCM lattice"
+  on:blur={() => cursorAnchoredZoom = false}
   on:keydown={handleKeydown}
+  on:keyup={handleKeyup}
   on:pointerdown={(event) => {
     handlePointer(event);
     canvas.focus();
   }}
   on:pointermove={handlePointer}
+  on:wheel|nonpassive={handleWheel}
   tabindex="0"
 ></canvas>

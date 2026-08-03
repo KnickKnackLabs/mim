@@ -30,6 +30,8 @@ export function buildFrame(state: MimState): DisplayFrame {
     columns: state.columns,
     maximumValue,
     rows: state.rows,
+    viewX: state.viewX,
+    viewY: state.viewY,
     zoomDenominator: state.zoomDenominator,
   };
 }

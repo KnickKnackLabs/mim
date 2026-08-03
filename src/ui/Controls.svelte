@@ -106,7 +106,8 @@
     <span><kbd>g</kbd> gcd</span>
     <span><kbd>m</kbd> lcm</span>
     <span><kbd>p</kbd> primes</span>
-    <span><kbd>+ −</kbd> zoom</span>
+    <span><kbd>wheel</kbd> zoom</span>
+    <span><kbd>c</kbd> cursor zoom</span>
     <span><kbd>hjkl</kbd> move</span>
     <span><kbd>?</kbd> help</span>
   </div>

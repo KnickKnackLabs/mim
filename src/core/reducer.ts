@@ -54,6 +54,19 @@ export function reduceState(state: MimState, command: Command): MimState {
         : { ...state, zoomDenominator };
     }
 
+    case "zoom-at": {
+      if (!Number.isFinite(command.anchorX) || !Number.isFinite(command.anchorY)) return state;
+      const zoomDenominator = stepZoom(state.zoomDenominator, command.direction);
+      if (zoomDenominator === state.zoomDenominator) return state;
+      const scale = zoomDenominator / state.zoomDenominator;
+      return {
+        ...state,
+        viewX: state.viewX + command.anchorX - command.anchorX * scale,
+        viewY: state.viewY + command.anchorY - command.anchorY * scale,
+        zoomDenominator,
+      };
+    }
+
     case "zoom-in": {
       const zoomDenominator = stepZoom(state.zoomDenominator, "in");
       return zoomDenominator === state.zoomDenominator

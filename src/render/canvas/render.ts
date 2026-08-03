@@ -43,6 +43,8 @@ export function renderFrame(
     frame.columns,
     frame.rows,
     frame.zoomDenominator,
+    frame.viewX,
+    frame.viewY,
   );
   const gap = Math.min(1, Math.max(0.15, layout.cellSize * 0.04));
 

@@ -12,17 +12,20 @@ export function squareGridAtScale(
   columns: number,
   rows: number,
   zoomDenominator: number,
+  viewX = 0,
+  viewY = 0,
 ): SquareGridLayout {
   if (width <= 0 || height <= 0 || columns < 1 || rows < 1 || zoomDenominator < 1) {
     throw new RangeError("scaled grid layout requires positive dimensions, bounds, and zoom");
   }
 
+  const cellSize = Math.min(width, height) / zoomDenominator;
   return {
-    cellSize: Math.min(width, height) / zoomDenominator,
+    cellSize,
     columns,
-    left: 0,
+    left: -viewX * cellSize,
     rows,
-    top: 0,
+    top: -viewY * cellSize,
   };
 }
 

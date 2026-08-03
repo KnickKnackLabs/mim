@@ -12,6 +12,8 @@ export interface MimState {
   operation: Operation;
   rows: number;
   showPrimeResults: boolean;
+  viewX: number;
+  viewY: number;
   zoomDenominator: number;
 }
 
@@ -29,6 +31,8 @@ export function createInitialState(): MimState {
     operation: "lcm",
     rows: 96,
     showPrimeResults: true,
+    viewX: 0,
+    viewY: 0,
     zoomDenominator: 48,
   };
 }
