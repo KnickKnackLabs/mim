@@ -12,6 +12,15 @@ describe("reduceState", () => {
     expect(state.operation).toBe("gcd");
   });
 
+  test("toggles and closes help", () => {
+    const initial = createInitialState();
+    const visible = reduceState(initial, { type: "toggle-help" });
+    expect(visible.helpVisible).toBe(true);
+    expect(reduceState(visible, { type: "toggle-help" }).helpVisible).toBe(false);
+    expect(reduceState(visible, { type: "close-help" }).helpVisible).toBe(false);
+    expect(reduceState(initial, { type: "close-help" })).toBe(initial);
+  });
+
   test("moves and clamps the cursor", () => {
     let state = reduceState(createInitialState(), { type: "move-cursor", dx: -2, dy: 4 });
     expect(state.cursor).toEqual({ x: 1, y: 5 });

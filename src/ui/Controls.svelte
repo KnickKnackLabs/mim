@@ -71,5 +71,6 @@
     <span><kbd>m</kbd> lcm</span>
     <span><kbd>p</kbd> primes</span>
     <span><kbd>hjkl</kbd> move</span>
+    <span><kbd>?</kbd> help</span>
   </div>
 </section>

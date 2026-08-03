@@ -8,6 +8,7 @@ export interface Cursor {
 export interface MimState {
   columns: number;
   cursor: Cursor | null;
+  helpVisible: boolean;
   operation: Operation;
   rows: number;
   showPrimeResults: boolean;
@@ -20,6 +21,7 @@ export function createInitialState(): MimState {
   return {
     columns: 48,
     cursor: null,
+    helpVisible: false,
     operation: "lcm",
     rows: 48,
     showPrimeResults: true,

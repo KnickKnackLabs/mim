@@ -14,6 +14,12 @@ function clampCursor(cursor: Cursor, state: MimState): Cursor {
 
 export function reduceState(state: MimState, command: Command): MimState {
   switch (command.type) {
+    case "close-help":
+      return state.helpVisible ? { ...state, helpVisible: false } : state;
+
+    case "toggle-help":
+      return { ...state, helpVisible: !state.helpVisible };
+
     case "set-operation":
       return { ...state, operation: command.operation };
 

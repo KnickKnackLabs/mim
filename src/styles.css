@@ -162,6 +162,80 @@ kbd {
   font-weight: 600;
 }
 
+.help-overlay {
+  position: fixed;
+  z-index: 4;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  background: rgba(3, 14, 23, 0.68);
+  backdrop-filter: blur(4px);
+}
+
+.help-panel {
+  width: min(100%, 38rem);
+  max-height: 100%;
+  overflow: auto;
+  padding: 1.25rem;
+  border: 1px solid rgba(186, 230, 253, 0.26);
+  border-radius: 0.8rem;
+  background: rgba(7, 24, 39, 0.86);
+  box-shadow: 0 1.25rem 4rem rgba(0, 0, 0, 0.38);
+}
+
+.help-panel header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.help-panel h1 {
+  margin: 0.12rem 0 0;
+  font-size: 1.6rem;
+}
+
+.eyebrow {
+  color: #9cc7dc;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.help-close {
+  padding-inline: 0.8rem;
+}
+
+.help-panel dl {
+  display: grid;
+  margin: 0;
+}
+
+.help-panel dl > div {
+  display: grid;
+  grid-template-columns: minmax(6.5rem, 0.7fr) 1fr;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.58rem 0;
+  border-top: 1px solid rgba(186, 230, 253, 0.12);
+}
+
+.help-panel dt,
+.help-panel dd {
+  margin: 0;
+}
+
+.help-panel dt {
+  color: #dff4ff;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.help-panel dd {
+  color: #b8d8e7;
+}
+
 @media (max-width: 760px) {
   .controls {
     flex-wrap: wrap;

@@ -17,6 +17,8 @@ export function commandForKey(key: string): Command | null {
     return { type: "move-cursor", dx: movement[0], dy: movement[1] };
   }
 
+  if (key === "?") return { type: "toggle-help" };
+  if (key === "Escape") return { type: "close-help" };
   if (key === "g") return { type: "set-operation", operation: "gcd" };
   if (key === "m") return { type: "set-operation", operation: "lcm" };
   if (key === "p") return { type: "toggle-prime-results" };
