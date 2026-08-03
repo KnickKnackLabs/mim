@@ -1,4 +1,4 @@
-import type { DisplayCell, DisplayFrame } from "../../instruments/gcd-lcm/frame";
+import type { DisplayCell, DisplayFrame } from "../frame";
 
 export interface RenderSize {
   cssHeight: number;

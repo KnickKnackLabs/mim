@@ -1,24 +1,6 @@
 import type { MimState } from "../../core/state";
+import type { DisplayCell, DisplayFrame } from "../../render/frame";
 import { isPrime, operate } from "./math";
-
-export type CellAccent = "prime" | null;
-
-export interface DisplayCell {
-  accent: CellAccent;
-  diagonal: boolean;
-  intensity: number;
-  selected: boolean;
-  value: number;
-  x: number;
-  y: number;
-}
-
-export interface DisplayFrame {
-  cells: DisplayCell[];
-  columns: number;
-  maximumValue: number;
-  rows: number;
-}
 
 export function buildFrame(state: MimState): DisplayFrame {
   const raw: Array<Omit<DisplayCell, "intensity">> = [];
