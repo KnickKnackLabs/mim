@@ -39,6 +39,9 @@ jobs:
           # Serialize installation without changing test and lint behavior.
           MISE_JOBS: 1
 
+      - name: Install frontend dependencies
+        run: bun install --frozen-lockfile
+
       - name: Check committed whitespace
         run: git diff --check "$(git hash-object -t tree /dev/null)" HEAD
 

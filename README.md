@@ -27,6 +27,7 @@ Svelte owns the interface shell. Plain TypeScript owns state, commands, mathemat
 ```bash
 mise trust
 mise install
+bun install --frozen-lockfile
 mise run mim:dev
 
 # Build and open the portable artifact.

@@ -7,6 +7,7 @@
 ```bash
 mise trust
 mise install
+bun install --frozen-lockfile
 mise run mim:dev
 ```
 

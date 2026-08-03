@@ -19,6 +19,7 @@ The current GCD/LCM instrument is the first concrete consumer, not proof that ev
 
 ```bash
 mise install
+bun install --frozen-lockfile
 mise run mim:dev
 mise run test
 mise run mim:build

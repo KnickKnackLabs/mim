@@ -79,6 +79,7 @@ const readme = (
     <Section title="Start">
       <CodeBlock lang="bash">{`mise trust
 mise install
+bun install --frozen-lockfile
 mise run mim:dev
 
 # Build and open the portable artifact.
