@@ -60,11 +60,19 @@ canvas:focus-visible {
   gap: 0.8rem;
   padding: 0.7rem 0.85rem;
   transform: translateX(-50%);
+  opacity: var(--controls-proximity, 0);
+  transition: opacity 80ms linear;
+  will-change: opacity;
   border: 1px solid rgba(186, 230, 253, 0.2);
   border-radius: 0.7rem;
   background: rgba(7, 24, 39, 0.6);
   box-shadow: 0 0.8rem 2.5rem rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(12px);
+}
+
+.controls:hover,
+.controls:focus-within {
+  opacity: 1;
 }
 
 .brand {
@@ -255,6 +263,18 @@ kbd {
 
 .help-panel dd {
   color: #b8d8e7;
+}
+
+@media (hover: none) {
+  .controls {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .controls {
+    transition: none;
+  }
 }
 
 @media (max-width: 760px) {

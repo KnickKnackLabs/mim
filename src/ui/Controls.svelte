@@ -12,6 +12,15 @@
   export let state: MimState;
   export let dispatch: Dispatch;
 
+  let proximity = 0;
+
+  function trackPointer(event: PointerEvent): void {
+    if (event.pointerType === "touch") return;
+    const position = event.clientY / window.innerHeight;
+    const progress = Math.min(1, Math.max(0, (0.5 - position) / (0.5 - 1 / 3)));
+    proximity = progress * progress * (3 - 2 * progress);
+  }
+
   function numberValue(event: Event): number {
     return Number((event.currentTarget as HTMLInputElement).value);
   }
@@ -21,7 +30,16 @@
   }
 </script>
 
-<section class="controls" aria-label="Instrument controls">
+<svelte:window
+  on:pointerleave={() => proximity = 0}
+  on:pointermove={trackPointer}
+/>
+
+<section
+  class="controls"
+  aria-label="Instrument controls"
+  style={`--controls-proximity: ${proximity}`}
+>
   <div class="brand">
     <strong>mim</strong>
     <span>math instrument</span>
