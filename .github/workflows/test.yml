@@ -39,8 +39,8 @@ jobs:
           # Serialize installation without changing test and lint behavior.
           MISE_JOBS: 1
 
-      - name: Check whitespace
-        run: git diff --check
+      - name: Check committed whitespace
+        run: git diff --check "$(git hash-object -t tree /dev/null)" HEAD
 
       - name: Run tests
         run: mise run test
