@@ -1,4 +1,5 @@
 import type { DisplayCell, DisplayFrame } from "../frame";
+import { coverWithSquareCells } from "../layout";
 
 export interface RenderSize {
   cssHeight: number;
@@ -36,34 +37,29 @@ export function renderFrame(
   context.fillStyle = "#071827";
   context.fillRect(0, 0, width, height);
 
-  const cellWidth = width / frame.columns;
-  const cellHeight = height / frame.rows;
-  const gap = Math.min(1, Math.max(0.15, Math.min(cellWidth, cellHeight) * 0.04));
+  const layout = coverWithSquareCells(width, height, frame.columns, frame.rows);
+  const gap = Math.min(1, Math.max(0.15, layout.cellSize * 0.04));
 
   for (const cell of frame.cells) {
-    const left = (cell.x - 1) * cellWidth;
-    const top = (cell.y - 1) * cellHeight;
+    const left = layout.left + (cell.x - 1) * layout.cellSize;
+    const top = layout.top + (cell.y - 1) * layout.cellSize;
+    const visibleSize = Math.max(0, layout.cellSize - gap * 2);
     context.fillStyle = fillFor(cell);
-    context.fillRect(
-      left + gap,
-      top + gap,
-      Math.max(0, cellWidth - gap * 2),
-      Math.max(0, cellHeight - gap * 2),
-    );
+    context.fillRect(left + gap, top + gap, visibleSize, visibleSize);
 
     if (cell.diagonal && cell.accent === null) {
       context.fillStyle = "rgba(224, 242, 254, 0.28)";
-      context.fillRect(left + gap, top + gap, cellWidth - gap * 2, cellHeight - gap * 2);
+      context.fillRect(left + gap, top + gap, visibleSize, visibleSize);
     }
 
     if (cell.selected) {
       context.strokeStyle = "#ffffff";
-      context.lineWidth = Math.max(1, Math.min(cellWidth, cellHeight) * 0.12);
+      context.lineWidth = Math.max(1, layout.cellSize * 0.12);
       context.strokeRect(
         left + context.lineWidth / 2,
         top + context.lineWidth / 2,
-        Math.max(0, cellWidth - context.lineWidth),
-        Math.max(0, cellHeight - context.lineWidth),
+        Math.max(0, layout.cellSize - context.lineWidth),
+        Math.max(0, layout.cellSize - context.lineWidth),
       );
     }
   }

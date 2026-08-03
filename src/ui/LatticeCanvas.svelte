@@ -7,6 +7,7 @@
   import { cellForPoint } from "../input/pointer";
   import { buildFrame } from "../instruments/gcd-lcm/frame";
   import { renderFrame } from "../render/canvas/render";
+  import { coverWithSquareCells } from "../render/layout";
 
   export let state: MimState;
   export let dispatch: Dispatch;
@@ -40,13 +41,14 @@
   }
 
   function handlePointer(event: PointerEvent): void {
-    const cursor = cellForPoint(
-      event.clientX,
-      event.clientY,
-      canvas.getBoundingClientRect(),
+    const bounds = canvas.getBoundingClientRect();
+    const layout = coverWithSquareCells(
+      bounds.width,
+      bounds.height,
       state.columns,
       state.rows,
     );
+    const cursor = cellForPoint(event.clientX, event.clientY, bounds, layout);
     dispatch({ type: "set-cursor", ...cursor });
   }
 </script>

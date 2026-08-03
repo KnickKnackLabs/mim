@@ -1,10 +1,9 @@
 import type { Cursor } from "../core/state";
+import type { SquareGridLayout } from "../render/layout";
 
 export interface PointerBounds {
-  height: number;
   left: number;
   top: number;
-  width: number;
 }
 
 function clamp(value: number, maximum: number): number {
@@ -15,10 +14,14 @@ export function cellForPoint(
   clientX: number,
   clientY: number,
   bounds: PointerBounds,
-  columns: number,
-  rows: number,
+  layout: SquareGridLayout,
 ): Cursor {
-  const x = Math.floor(((clientX - bounds.left) / bounds.width) * columns) + 1;
-  const y = Math.floor(((clientY - bounds.top) / bounds.height) * rows) + 1;
-  return { x: clamp(x, columns), y: clamp(y, rows) };
+  const localX = clientX - bounds.left - layout.left;
+  const localY = clientY - bounds.top - layout.top;
+  const x = Math.floor(localX / layout.cellSize) + 1;
+  const y = Math.floor(localY / layout.cellSize) + 1;
+  return {
+    x: clamp(x, layout.columns),
+    y: clamp(y, layout.rows),
+  };
 }
