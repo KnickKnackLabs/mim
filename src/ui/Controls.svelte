@@ -1,6 +1,13 @@
 <script lang="ts">
   import type { Dispatch } from "../core/commands";
-  import { MAX_BOUND, MIN_BOUND, type MimState, type Operation } from "../core/state";
+  import {
+    MAX_BOUND,
+    MAX_ZOOM_DENOMINATOR,
+    MIN_BOUND,
+    MIN_ZOOM_DENOMINATOR,
+    type MimState,
+    type Operation,
+  } from "../core/state";
 
   export let state: MimState;
   export let dispatch: Dispatch;
@@ -31,6 +38,35 @@
       type="button"
       on:click={() => setOperation("lcm")}
     >LCM</button>
+  </div>
+
+  <div class="zoom-control" aria-label="Camera zoom">
+    <button
+      aria-label="Zoom out"
+      title="Zoom out (-)"
+      type="button"
+      on:click={() => dispatch({ type: "zoom-out" })}
+    >−</button>
+    <label class="zoom-value">
+      <span>Zoom</span>
+      <div class="fraction">
+        <span>1/</span>
+        <input
+          aria-label="Zoom denominator"
+          max={MAX_ZOOM_DENOMINATOR}
+          min={MIN_ZOOM_DENOMINATOR}
+          type="number"
+          value={state.zoomDenominator}
+          on:change={(event) => dispatch({ type: "set-zoom-denominator", value: numberValue(event) })}
+        />
+      </div>
+    </label>
+    <button
+      aria-label="Zoom in"
+      title="Zoom in (+)"
+      type="button"
+      on:click={() => dispatch({ type: "zoom-in" })}
+    >+</button>
   </div>
 
   <label>
@@ -70,6 +106,7 @@
     <span><kbd>g</kbd> gcd</span>
     <span><kbd>m</kbd> lcm</span>
     <span><kbd>p</kbd> primes</span>
+    <span><kbd>+ −</kbd> zoom</span>
     <span><kbd>hjkl</kbd> move</span>
     <span><kbd>?</kbd> help</span>
   </div>

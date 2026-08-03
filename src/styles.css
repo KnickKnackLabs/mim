@@ -93,6 +93,27 @@ label span {
   gap: 0.25rem;
 }
 
+.zoom-control {
+  display: flex;
+  align-items: end;
+  gap: 0.25rem;
+}
+
+.zoom-value {
+  min-width: 5.2rem;
+}
+
+.fraction {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  color: #9cc7dc;
+}
+
+.fraction input[type="number"] {
+  width: 3.5rem;
+}
+
 button,
 input[type="number"] {
   color: #dff4ff;

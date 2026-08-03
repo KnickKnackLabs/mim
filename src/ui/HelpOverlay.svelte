@@ -39,6 +39,7 @@
       <div><dt><kbd>arrows</kbd></dt><dd>move the selected cell</dd></div>
       <div><dt><kbd>g</kbd></dt><dd>show greatest common divisors</dd></div>
       <div><dt><kbd>m</kbd></dt><dd>show least common multiples</dd></div>
+      <div><dt><kbd>+ −</kbd></dt><dd>zoom in and out</dd></div>
       <div><dt><kbd>p</kbd></dt><dd>toggle prime results</dd></div>
       <div><dt>pointer</dt><dd>select a cell</dd></div>
       <div><dt>X / Y</dt><dd>set the lattice bounds</dd></div>

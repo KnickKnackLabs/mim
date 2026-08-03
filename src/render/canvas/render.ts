@@ -1,5 +1,5 @@
 import type { DisplayCell, DisplayFrame } from "../frame";
-import { coverWithSquareCells } from "../layout";
+import { squareGridAtScale } from "../layout";
 
 export interface RenderSize {
   cssHeight: number;
@@ -37,7 +37,13 @@ export function renderFrame(
   context.fillStyle = "#071827";
   context.fillRect(0, 0, width, height);
 
-  const layout = coverWithSquareCells(width, height, frame.columns, frame.rows);
+  const layout = squareGridAtScale(
+    width,
+    height,
+    frame.columns,
+    frame.rows,
+    frame.zoomDenominator,
+  );
   const gap = Math.min(1, Math.max(0.15, layout.cellSize * 0.04));
 
   for (const cell of frame.cells) {

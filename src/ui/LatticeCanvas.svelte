@@ -7,7 +7,7 @@
   import { cellForPoint } from "../input/pointer";
   import { buildFrame } from "../instruments/gcd-lcm/frame";
   import { renderFrame } from "../render/canvas/render";
-  import { coverWithSquareCells } from "../render/layout";
+  import { squareGridAtScale } from "../render/layout";
 
   export let state: MimState;
   export let dispatch: Dispatch;
@@ -42,11 +42,12 @@
 
   function handlePointer(event: PointerEvent): void {
     const bounds = canvas.getBoundingClientRect();
-    const layout = coverWithSquareCells(
+    const layout = squareGridAtScale(
       bounds.width,
       bounds.height,
       state.columns,
       state.rows,
+      state.zoomDenominator,
     );
     const cursor = cellForPoint(event.clientX, event.clientY, bounds, layout);
     dispatch({ type: "set-cursor", ...cursor });

@@ -19,6 +19,8 @@ export function commandForKey(key: string): Command | null {
 
   if (key === "?") return { type: "toggle-help" };
   if (key === "Escape") return { type: "close-help" };
+  if (key === "+" || key === "=") return { type: "zoom-in" };
+  if (key === "-" || key === "_") return { type: "zoom-out" };
   if (key === "g") return { type: "set-operation", operation: "gcd" };
   if (key === "m") return { type: "set-operation", operation: "lcm" };
   if (key === "p") return { type: "toggle-prime-results" };

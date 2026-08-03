@@ -15,4 +15,5 @@ export interface DisplayFrame {
   columns: number;
   maximumValue: number;
   rows: number;
+  zoomDenominator: number;
 }

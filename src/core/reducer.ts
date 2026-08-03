@@ -1,8 +1,24 @@
 import type { Command } from "./commands";
-import { MAX_BOUND, MIN_BOUND, type Cursor, type MimState } from "./state";
+import {
+  MAX_BOUND,
+  MAX_ZOOM_DENOMINATOR,
+  MIN_BOUND,
+  MIN_ZOOM_DENOMINATOR,
+  type Cursor,
+  type MimState,
+  ZOOM_DENOMINATORS,
+} from "./state";
 
 function clamp(value: number, minimum: number, maximum: number): number {
   return Math.min(maximum, Math.max(minimum, value));
+}
+
+function stepZoom(current: number, direction: "in" | "out"): number {
+  const candidates = direction === "in"
+    ? [...ZOOM_DENOMINATORS].reverse()
+    : ZOOM_DENOMINATORS;
+  return candidates.find((value) => direction === "in" ? value < current : value > current)
+    ?? current;
 }
 
 function clampCursor(cursor: Cursor, state: MimState): Cursor {
@@ -25,6 +41,32 @@ export function reduceState(state: MimState, command: Command): MimState {
 
     case "toggle-prime-results":
       return { ...state, showPrimeResults: !state.showPrimeResults };
+
+    case "set-zoom-denominator": {
+      if (!Number.isFinite(command.value)) return state;
+      const zoomDenominator = clamp(
+        Math.round(command.value),
+        MIN_ZOOM_DENOMINATOR,
+        MAX_ZOOM_DENOMINATOR,
+      );
+      return zoomDenominator === state.zoomDenominator
+        ? state
+        : { ...state, zoomDenominator };
+    }
+
+    case "zoom-in": {
+      const zoomDenominator = stepZoom(state.zoomDenominator, "in");
+      return zoomDenominator === state.zoomDenominator
+        ? state
+        : { ...state, zoomDenominator };
+    }
+
+    case "zoom-out": {
+      const zoomDenominator = stepZoom(state.zoomDenominator, "out");
+      return zoomDenominator === state.zoomDenominator
+        ? state
+        : { ...state, zoomDenominator };
+    }
 
     case "set-cursor":
       return { ...state, cursor: clampCursor(command, state) };
