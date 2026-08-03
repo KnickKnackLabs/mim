@@ -9,7 +9,7 @@ export type Command =
   | { type: "set-zoom-denominator"; value: number }
   | { type: "toggle-help" }
   | { type: "toggle-prime-results" }
-  | { type: "zoom-at"; anchorX: number; anchorY: number; direction: "in" | "out" }
+  | { type: "zoom-at"; anchorX: number; anchorY: number; factor: number }
   | { type: "zoom-in" }
   | { type: "zoom-out" };
 

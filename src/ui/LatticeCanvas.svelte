@@ -2,7 +2,7 @@
   import { onMount } from "svelte";
 
   import type { Dispatch } from "../core/commands";
-  import type { MimState } from "../core/state";
+  import { GOLDEN_ZOOM_STEP, type MimState } from "../core/state";
   import { commandForKey } from "../input/keyboard";
   import { cellForPoint } from "../input/pointer";
   import { buildFrame } from "../instruments/gcd-lcm/frame";
@@ -16,8 +16,11 @@
   let cssHeight = 1;
   let cssWidth = 1;
   let cursorAnchoredZoom = false;
-  let lastWheelZoomAt = -Infinity;
+  let pendingWheelDelta = 0;
+  let pendingWheelX = 0;
+  let pendingWheelY = 0;
   let pixelRatio = 1;
+  let wheelFrame: number | null = null;
 
   $: frame = buildFrame(state);
   $: if (canvas && cssWidth > 1 && cssHeight > 1) {
@@ -32,7 +35,10 @@
     });
     observer.observe(canvas);
     canvas.focus();
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      if (wheelFrame !== null) cancelAnimationFrame(wheelFrame);
+    };
   });
 
   function handleKeydown(event: KeyboardEvent): void {
@@ -67,24 +73,34 @@
     dispatch({ type: "set-cursor", ...cursor });
   }
 
-  function handleWheel(event: WheelEvent): void {
-    event.preventDefault();
-    if (Math.abs(event.deltaY) < 0.5) return;
-
-    const now = performance.now();
-    if (now - lastWheelZoomAt < 75) return;
-    lastWheelZoomAt = now;
-
+  function applyWheelZoom(): void {
+    wheelFrame = null;
     const bounds = canvas.getBoundingClientRect();
     const cellSize = Math.min(bounds.width, bounds.height) / state.zoomDenominator;
-    const pixelX = cursorAnchoredZoom ? event.clientX - bounds.left : bounds.width / 2;
-    const pixelY = cursorAnchoredZoom ? event.clientY - bounds.top : bounds.height / 2;
+    const factor = Math.pow(GOLDEN_ZOOM_STEP, pendingWheelDelta / 100);
+    pendingWheelDelta = 0;
     dispatch({
       type: "zoom-at",
-      anchorX: pixelX / cellSize,
-      anchorY: pixelY / cellSize,
-      direction: event.deltaY < 0 ? "in" : "out",
+      anchorX: pendingWheelX / cellSize,
+      anchorY: pendingWheelY / cellSize,
+      factor,
     });
+  }
+
+  function handleWheel(event: WheelEvent): void {
+    event.preventDefault();
+    const bounds = canvas.getBoundingClientRect();
+    const normalizedDelta = event.deltaMode === 1
+      ? event.deltaY * 16
+      : event.deltaMode === 2
+        ? event.deltaY * bounds.height
+        : event.deltaY;
+    if (Math.abs(normalizedDelta) < 0.01) return;
+
+    pendingWheelDelta += normalizedDelta;
+    pendingWheelX = cursorAnchoredZoom ? event.clientX - bounds.left : bounds.width / 2;
+    pendingWheelY = cursorAnchoredZoom ? event.clientY - bounds.top : bounds.height / 2;
+    if (wheelFrame === null) wheelFrame = requestAnimationFrame(applyWheelZoom);
   }
 </script>
 
