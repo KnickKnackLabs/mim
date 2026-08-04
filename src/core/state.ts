@@ -2,6 +2,9 @@ import type { AxisKind } from "./axis";
 
 export type Operation = "gcd" | "lcm";
 
+export const PERFORMANCE_WINDOWS = [1, 2, 3, 5, 10, 20, 30] as const;
+export type PerformanceWindowSeconds = typeof PERFORMANCE_WINDOWS[number];
+
 export interface Cursor {
   x: number;
   y: number;
@@ -20,6 +23,8 @@ export interface MimState {
   motionEnd: Cursor | null;
   motionStart: Cursor | null;
   operation: Operation;
+  performanceVisible: boolean;
+  performanceWindowSeconds: PerformanceWindowSeconds;
   pinCursor: boolean;
   showPrimeResults: boolean;
   viewX: number;
@@ -41,6 +46,8 @@ export function createInitialState(): MimState {
     motionEnd: null,
     motionStart: null,
     operation: "lcm",
+    performanceVisible: true,
+    performanceWindowSeconds: 3,
     pinCursor: false,
     showPrimeResults: true,
     viewX: 0,

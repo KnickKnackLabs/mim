@@ -14,7 +14,9 @@ export type Command =
   | { type: "set-cursor"; x: number; y: number }
   | { type: "set-operation"; operation: Operation }
   | { type: "set-zoom-denominator"; value: number }
+  | { type: "step-performance-window"; direction: "shorter" | "longer" }
   | { type: "toggle-help" }
+  | { type: "toggle-performance" }
   | { type: "toggle-pin-cursor" }
   | { type: "toggle-prime-results" }
   | { type: "zoom-at"; anchorX: number; anchorY: number; denominator: number }

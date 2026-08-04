@@ -14,6 +14,16 @@ test("keyboard input maps to semantic commands", () => {
   expect(commandForKey("Escape")).toEqual({ type: "escape" });
   expect(commandForKey("g")).toEqual({ type: "set-operation", operation: "gcd" });
   expect(commandForKey("m")).toEqual({ type: "set-operation", operation: "lcm" });
+  expect(commandForKey("p")).toEqual({ type: "toggle-prime-results" });
+  expect(commandForKey("P")).toEqual({ type: "toggle-performance" });
+  expect(commandForKey("[")).toEqual({
+    type: "step-performance-window",
+    direction: "shorter",
+  });
+  expect(commandForKey("]")).toEqual({
+    type: "step-performance-window",
+    direction: "longer",
+  });
 });
 
 test("held direction keys combine into one grid movement", () => {

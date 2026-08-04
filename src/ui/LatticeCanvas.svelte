@@ -13,6 +13,7 @@
   import { cellForPoint } from "../input/pointer";
   import { wheelZoomDenominator } from "../input/wheelZoom";
   import { buildFrame } from "../instruments/gcd-lcm/frame";
+  import { recordRender } from "../performance/metrics";
   import { renderFrame } from "../render/canvas/render";
   import {
     squareGridAtScale,
@@ -56,9 +57,36 @@
     state.viewX,
     state.viewY,
   );
-  $: frame = buildFrame(state, visibleExtent);
   $: if (canvas && cssWidth > 1 && cssHeight > 1) {
-    renderFrame(canvas, frame, { cssHeight, cssWidth, pixelRatio });
+    const prepareStarted = performance.now();
+    const frame = buildFrame(state, visibleExtent);
+    const prepareEnded = performance.now();
+    try {
+      renderFrame(canvas, frame, { cssHeight, cssWidth, pixelRatio });
+    } finally {
+      const paintEnded = performance.now();
+      recordRender({
+        context: {
+          cellCount: frame.cells.length,
+          columns: frame.columns,
+          cursor: state.cursor ? { ...state.cursor } : null,
+          operation: state.operation,
+          pinCursor: state.pinCursor,
+          rows: frame.rows,
+          showPrimeResults: state.showPrimeResults,
+          viewX: frame.viewX,
+          viewY: frame.viewY,
+          xAxis: state.xAxis,
+          yAxis: state.yAxis,
+          zoomDenominator: frame.zoomDenominator,
+        },
+        paintMs: paintEnded - prepareEnded,
+        prepareMs: prepareEnded - prepareStarted,
+        sampledAt: paintEnded,
+        totalMs: paintEnded - prepareStarted,
+        wallTime: Date.now(),
+      });
+    }
   }
 
   onMount(() => {

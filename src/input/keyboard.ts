@@ -57,6 +57,9 @@ export function commandForKey(key: string, count = 1, shiftKey = false): Command
   if (key === "m") return { type: "set-operation", operation: "lcm" };
   if (key === "s") return { type: "start-motion" };
   if (key === "p") return { type: "toggle-prime-results" };
+  if (key === "P") return { type: "toggle-performance" };
+  if (key === "[") return { type: "step-performance-window", direction: "shorter" };
+  if (key === "]") return { type: "step-performance-window", direction: "longer" };
   return null;
 }
 

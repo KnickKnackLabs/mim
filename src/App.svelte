@@ -9,6 +9,7 @@
   import Controls from "./ui/Controls.svelte";
   import HelpOverlay from "./ui/HelpOverlay.svelte";
   import LatticeCanvas from "./ui/LatticeCanvas.svelte";
+  import PerformanceOverlay from "./ui/PerformanceOverlay.svelte";
 
   let state = createInitialState();
   let visibleExtent: VisibleGridExtent = visibleGridExtent(1, 1, 1);
@@ -75,6 +76,11 @@
   <div class="instrument">
     <LatticeCanvas {state} {dispatch} bind:visibleExtent />
   </div>
+
+  <PerformanceOverlay
+    visible={state.performanceVisible}
+    windowSeconds={state.performanceWindowSeconds}
+  />
 
   <aside class="camera-readout" aria-label="Camera status">
     <span>zoom <strong>1/{state.zoomDenominator}</strong></span>

@@ -62,6 +62,8 @@
       <div><dt><kbd>+ −</kbd></dt><dd>zoom in and out</dd></div>
       <div><dt><kbd>wheel</kbd></dt><dd>zoom toward the pointer</dd></div>
       <div><dt><kbd>p</kbd></dt><dd>toggle prime results</dd></div>
+      <div><dt><kbd>Shift P</kbd></dt><dd>toggle render performance</dd></div>
+      <div><dt><kbd>[ ]</kbd></dt><dd>shorten or lengthen the performance window</dd></div>
       <div><dt>click</dt><dd>select a cell</dd></div>
       <div><dt>drag</dt><dd>pan the view</dd></div>
       <div><dt>X / Y axes</dt><dd>choose how grid indices map to mathematical values</dd></div>
