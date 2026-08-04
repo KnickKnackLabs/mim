@@ -27,9 +27,9 @@ export interface MimState {
 }
 
 export const MIN_BOUND = 2;
-export const MAX_BOUND = 160;
+export const MAX_BOUND = 256;
 export const MIN_ZOOM_DENOMINATOR = 1;
-export const MAX_ZOOM_DENOMINATOR = 96;
+export const MAX_ZOOM_DENOMINATOR = 256;
 
 export function createInitialState(): MimState {
   return {
