@@ -121,13 +121,20 @@
     <span>prime results</span>
   </label>
 
+  <button
+    class="reset-button"
+    type="button"
+    on:click={() => dispatch({ type: "reset-defaults" })}
+  >Reset</button>
+
   <div class="keys" aria-label="Keyboard shortcuts">
     <span><kbd>g</kbd> gcd</span>
     <span><kbd>m</kbd> lcm</span>
     <span><kbd>p</kbd> primes</span>
-    <span><kbd>wheel</kbd> zoom</span>
-    <span><kbd>c</kbd> cursor zoom</span>
-    <span><kbd>hjkl</kbd> move</span>
+    <span><kbd>wheel</kbd> cursor zoom</span>
+    <span><kbd>s…e</kbd> record</span>
+    <span><kbd>Space</kbd> repeat</span>
+    <span><kbd>Esc</kbd> clear</span>
     <span><kbd>?</kbd> help</span>
   </div>
 </section>

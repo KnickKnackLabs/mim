@@ -60,6 +60,17 @@ export function renderFrame(
       context.fillRect(left + gap, top + gap, visibleSize, visibleSize);
     }
 
+    if (cell.motionStart || cell.motionEnd) {
+      context.strokeStyle = cell.motionEnd ? "#f0abfc" : "#67e8f9";
+      context.lineWidth = Math.max(1, layout.cellSize * 0.1);
+      context.strokeRect(
+        left + context.lineWidth / 2,
+        top + context.lineWidth / 2,
+        Math.max(0, layout.cellSize - context.lineWidth),
+        Math.max(0, layout.cellSize - context.lineWidth),
+      );
+    }
+
     if (cell.selected) {
       context.strokeStyle = "#ffffff";
       context.lineWidth = Math.max(1, layout.cellSize * 0.12);

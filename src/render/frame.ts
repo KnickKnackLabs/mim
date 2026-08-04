@@ -4,6 +4,8 @@ export interface DisplayCell {
   accent: CellAccent;
   diagonal: boolean;
   intensity: number;
+  motionEnd: boolean;
+  motionStart: boolean;
   selected: boolean;
   value: number;
   x: number;

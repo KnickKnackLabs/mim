@@ -34,17 +34,21 @@
 
     <dl>
       <div><dt><kbd>?</kbd></dt><dd>toggle this help</dd></div>
-      <div><dt><kbd>Esc</kbd></dt><dd>close help</dd></div>
+      <div><dt><kbd>Esc</kbd></dt><dd>close help, or clear the recorded motion</dd></div>
       <div><dt><kbd>h j k l</kbd></dt><dd>move the selected cell</dd></div>
-      <div><dt><kbd>arrows</kbd></dt><dd>move the selected cell</dd></div>
+      <div><dt><kbd>10l</kbd></dt><dd>move ten cells right</dd></div>
+      <div><dt><kbd>arrows</kbd></dt><dd>move the selected cell; counts work here too</dd></div>
+      <div><dt><kbd>s</kbd> … <kbd>e</kbd></dt><dd>record the movement sequence between start and end</dd></div>
+      <div><dt><kbd>Space</kbd></dt><dd>replay the recorded movement sequence</dd></div>
+      <div><dt><kbd>Shift Space</kbd></dt><dd>retrace the recorded sequence in reverse</dd></div>
       <div><dt><kbd>g</kbd></dt><dd>show greatest common divisors</dd></div>
       <div><dt><kbd>m</kbd></dt><dd>show least common multiples</dd></div>
       <div><dt><kbd>+ −</kbd></dt><dd>zoom in and out</dd></div>
-      <div><dt><kbd>wheel</kbd></dt><dd>zoom around the view center</dd></div>
-      <div><dt><kbd>c</kbd> + wheel</dt><dd>zoom toward the pointer</dd></div>
+      <div><dt><kbd>wheel</kbd></dt><dd>zoom toward the pointer</dd></div>
       <div><dt><kbd>p</kbd></dt><dd>toggle prime results</dd></div>
       <div><dt>pointer</dt><dd>select a cell</dd></div>
       <div><dt>X / Y</dt><dd>set the lattice bounds</dd></div>
+      <div><dt>Reset</dt><dd>restore the instrument defaults</dd></div>
     </dl>
   </div>
 </div>

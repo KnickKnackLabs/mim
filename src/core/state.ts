@@ -5,10 +5,19 @@ export interface Cursor {
   y: number;
 }
 
+export interface Motion {
+  dx: number;
+  dy: number;
+}
+
 export interface MimState {
   columns: number;
   cursor: Cursor | null;
   helpVisible: boolean;
+  lastMotion: Motion[];
+  motionBuffer: Motion[];
+  motionEnd: Cursor | null;
+  motionStart: Cursor | null;
   operation: Operation;
   rows: number;
   showPrimeResults: boolean;
@@ -28,6 +37,10 @@ export function createInitialState(): MimState {
     columns: 96,
     cursor: null,
     helpVisible: false,
+    lastMotion: [],
+    motionBuffer: [],
+    motionEnd: null,
+    motionStart: null,
     operation: "lcm",
     rows: 96,
     showPrimeResults: true,

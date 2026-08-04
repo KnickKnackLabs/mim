@@ -3,7 +3,7 @@
 
   import type { Dispatch } from "../core/commands";
   import { GOLDEN_ZOOM_STEP, type MimState } from "../core/state";
-  import { commandForKey } from "../input/keyboard";
+  import { createKeySequenceState, interpretKey } from "../input/keyboard";
   import { cellForPoint } from "../input/pointer";
   import { buildFrame } from "../instruments/gcd-lcm/frame";
   import { renderFrame } from "../render/canvas/render";
@@ -15,7 +15,7 @@
   let canvas: HTMLCanvasElement;
   let cssHeight = 1;
   let cssWidth = 1;
-  let cursorAnchoredZoom = false;
+  let keySequence = createKeySequenceState();
   let pendingWheelDelta = 0;
   let pendingWheelX = 0;
   let pendingWheelY = 0;
@@ -42,20 +42,12 @@
   });
 
   function handleKeydown(event: KeyboardEvent): void {
-    if (event.key.toLowerCase() === "c") {
-      event.preventDefault();
-      cursorAnchoredZoom = true;
-      return;
-    }
-
-    const command = commandForKey(event.key);
-    if (!command) return;
+    if (event.metaKey || event.ctrlKey || event.altKey) return;
+    const result = interpretKey(keySequence, event.key, event.shiftKey);
+    keySequence = result.state;
+    if (!result.handled) return;
     event.preventDefault();
-    dispatch(command);
-  }
-
-  function handleKeyup(event: KeyboardEvent): void {
-    if (event.key.toLowerCase() === "c") cursorAnchoredZoom = false;
+    if (result.command) dispatch(result.command);
   }
 
   function handlePointer(event: PointerEvent): void {
@@ -98,8 +90,8 @@
     if (Math.abs(normalizedDelta) < 0.01) return;
 
     pendingWheelDelta += normalizedDelta;
-    pendingWheelX = cursorAnchoredZoom ? event.clientX - bounds.left : bounds.width / 2;
-    pendingWheelY = cursorAnchoredZoom ? event.clientY - bounds.top : bounds.height / 2;
+    pendingWheelX = event.clientX - bounds.left;
+    pendingWheelY = event.clientY - bounds.top;
     if (wheelFrame === null) wheelFrame = requestAnimationFrame(applyWheelZoom);
   }
 </script>
@@ -107,9 +99,8 @@
 <canvas
   bind:this={canvas}
   aria-label="Interactive GCD and LCM lattice"
-  on:blur={() => cursorAnchoredZoom = false}
+  on:blur={() => keySequence = createKeySequenceState()}
   on:keydown={handleKeydown}
-  on:keyup={handleKeyup}
   on:pointerdown={(event) => {
     handlePointer(event);
     canvas.focus();

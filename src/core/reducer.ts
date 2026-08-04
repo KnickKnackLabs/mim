@@ -1,5 +1,6 @@
 import type { Command } from "./commands";
 import {
+  createInitialState,
   GOLDEN_ZOOM_STEP,
   MAX_BOUND,
   MAX_ZOOM_DENOMINATOR,
@@ -34,8 +35,42 @@ export function reduceState(state: MimState, command: Command): MimState {
     case "close-help":
       return state.helpVisible ? { ...state, helpVisible: false } : state;
 
+    case "escape":
+      return state.helpVisible
+        ? { ...state, helpVisible: false }
+        : {
+            ...state,
+            lastMotion: [],
+            motionBuffer: [],
+            motionEnd: null,
+            motionStart: null,
+          };
+
+    case "reset-defaults":
+      return createInitialState();
+
     case "toggle-help":
       return { ...state, helpVisible: !state.helpVisible };
+
+    case "start-motion": {
+      const cursor = state.cursor ?? { x: 1, y: 1 };
+      return {
+        ...state,
+        cursor,
+        motionBuffer: [],
+        motionEnd: null,
+        motionStart: { ...cursor },
+      };
+    }
+
+    case "finish-motion": {
+      if (!state.motionStart || !state.cursor) return state;
+      return {
+        ...state,
+        lastMotion: [...state.motionBuffer],
+        motionEnd: { ...state.cursor },
+      };
+    }
 
     case "set-operation":
       return { ...state, operation: command.operation };
@@ -102,7 +137,28 @@ export function reduceState(state: MimState, command: Command): MimState {
           { x: cursor.x + command.dx, y: cursor.y + command.dy },
           state,
         ),
+        lastMotion: state.motionStart && !state.motionEnd
+          ? state.lastMotion
+          : [{ dx: command.dx, dy: command.dy }],
+        motionBuffer: state.motionStart && !state.motionEnd
+          ? [...state.motionBuffer, { dx: command.dx, dy: command.dy }]
+          : state.motionBuffer,
       };
+    }
+
+    case "repeat-motion": {
+      if (state.lastMotion.length === 0) return state;
+      const motions = command.reverse
+        ? [...state.lastMotion].reverse().map(({ dx, dy }) => ({ dx: -dx, dy: -dy }))
+        : state.lastMotion;
+      let cursor = state.cursor ?? { x: 1, y: 1 };
+      for (const motion of motions) {
+        cursor = clampCursor(
+          { x: cursor.x + motion.dx, y: cursor.y + motion.dy },
+          state,
+        );
+      }
+      return { ...state, cursor };
     }
 
     case "set-bound": {
@@ -114,6 +170,8 @@ export function reduceState(state: MimState, command: Command): MimState {
       return {
         ...next,
         cursor: next.cursor ? clampCursor(next.cursor, next) : null,
+        motionEnd: next.motionEnd ? clampCursor(next.motionEnd, next) : null,
+        motionStart: next.motionStart ? clampCursor(next.motionStart, next) : null,
       };
     }
   }

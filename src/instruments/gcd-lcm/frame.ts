@@ -13,6 +13,8 @@ export function buildFrame(state: MimState): DisplayFrame {
       raw.push({
         accent: state.showPrimeResults && isPrime(value) ? "prime" : null,
         diagonal: x === y,
+        motionEnd: state.motionEnd?.x === x && state.motionEnd?.y === y,
+        motionStart: state.motionStart?.x === x && state.motionStart?.y === y,
         selected: state.cursor?.x === x && state.cursor?.y === y,
         value,
         x,

@@ -25,6 +25,13 @@
   $: selectedValue = state.cursor
     ? operate(state.operation, state.cursor.x, state.cursor.y)
     : null;
+  $: recordedMotion = state.motionStart && state.motionEnd
+    ? {
+        dx: state.motionEnd.x - state.motionStart.x,
+        dy: state.motionEnd.y - state.motionStart.y,
+        steps: state.lastMotion.length,
+      }
+    : null;
 </script>
 
 <svelte:window on:keydown={handleGlobalHelpKeydown} />
@@ -37,6 +44,11 @@
   </div>
 
   <aside class="readout" aria-live="polite">
+    {#if state.motionStart && !state.motionEnd}
+      <span>recording from ({state.motionStart.x}, {state.motionStart.y})</span>
+    {:else if recordedMotion}
+      <span>{recordedMotion.steps} motions · Δ({recordedMotion.dx}, {recordedMotion.dy})</span>
+    {/if}
     {#if state.cursor && selectedValue !== null}
       <strong>{state.operation}({state.cursor.x}, {state.cursor.y})</strong>
       <span>= {selectedValue}</span>

@@ -2,7 +2,12 @@ import type { Operation } from "./state";
 
 export type Command =
   | { type: "close-help" }
+  | { type: "escape" }
+  | { type: "finish-motion" }
   | { type: "move-cursor"; dx: number; dy: number }
+  | { type: "repeat-motion"; reverse: boolean }
+  | { type: "reset-defaults" }
+  | { type: "start-motion" }
   | { type: "set-bound"; axis: "x" | "y"; value: number }
   | { type: "set-cursor"; x: number; y: number }
   | { type: "set-operation"; operation: Operation }
