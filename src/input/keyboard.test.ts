@@ -1,6 +1,11 @@
 import { expect, test } from "bun:test";
 
-import { commandForKey, createKeySequenceState, interpretKey } from "./keyboard";
+import {
+  commandForKey,
+  createKeySequenceState,
+  interpretKey,
+  movementForKeys,
+} from "./keyboard";
 
 test("keyboard input maps to semantic commands", () => {
   expect(commandForKey("h")).toEqual({ type: "move-cursor", dx: -1, dy: 0 });
@@ -9,6 +14,12 @@ test("keyboard input maps to semantic commands", () => {
   expect(commandForKey("Escape")).toEqual({ type: "escape" });
   expect(commandForKey("g")).toEqual({ type: "set-operation", operation: "gcd" });
   expect(commandForKey("m")).toEqual({ type: "set-operation", operation: "lcm" });
+});
+
+test("held direction keys combine into one grid movement", () => {
+  expect(movementForKeys(["h", "j"])).toEqual([-1, 1]);
+  expect(movementForKeys(["l", "ArrowUp"])).toEqual([1, -1]);
+  expect(movementForKeys(["h", "l"])).toEqual([0, 0]);
 });
 
 test("numeric prefixes produce one counted movement command", () => {

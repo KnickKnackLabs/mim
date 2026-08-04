@@ -4,14 +4,44 @@
   import { createInitialState } from "./core/state";
   import { commandForKey } from "./input/keyboard";
   import { operate } from "./instruments/gcd-lcm/math";
+  import { visibleGridExtent, type VisibleGridExtent } from "./render/layout";
   import Controls from "./ui/Controls.svelte";
   import HelpOverlay from "./ui/HelpOverlay.svelte";
   import LatticeCanvas from "./ui/LatticeCanvas.svelte";
 
   let state = createInitialState();
+  let visibleExtent: VisibleGridExtent = visibleGridExtent(1, 1, 1);
 
   function dispatch(command: Command): void {
-    state = reduceState(state, command);
+    const previousCursor = state.cursor;
+    const next = reduceState(state, command);
+    if (
+      !next.cursor
+      || (command.type !== "move-cursor" && command.type !== "repeat-motion")
+      || visibleExtent.columns === 0
+      || visibleExtent.rows === 0
+    ) {
+      state = next;
+      return;
+    }
+
+    const dx = next.pinCursor && previousCursor
+      ? next.cursor.x - previousCursor.x
+      : next.cursor.x < visibleExtent.minX
+        ? next.cursor.x - visibleExtent.minX
+        : next.cursor.x > visibleExtent.maxX
+          ? next.cursor.x - visibleExtent.maxX
+          : 0;
+    const dy = next.pinCursor && previousCursor
+      ? next.cursor.y - previousCursor.y
+      : next.cursor.y < visibleExtent.minY
+        ? next.cursor.y - visibleExtent.minY
+        : next.cursor.y > visibleExtent.maxY
+          ? next.cursor.y - visibleExtent.maxY
+          : 0;
+    state = dx === 0 && dy === 0
+      ? next
+      : reduceState(next, { type: "pan-view", dx, dy });
   }
 
   function handleGlobalHelpKeydown(event: KeyboardEvent): void {
@@ -37,10 +67,10 @@
 <svelte:window on:keydown={handleGlobalHelpKeydown} />
 
 <main>
-  <Controls {state} {dispatch} />
+  <Controls {state} {dispatch} {visibleExtent} />
 
   <div class="instrument">
-    <LatticeCanvas {state} {dispatch} />
+    <LatticeCanvas {state} {dispatch} bind:visibleExtent />
   </div>
 
   <aside class="readout" aria-live="polite">

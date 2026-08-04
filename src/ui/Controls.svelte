@@ -1,18 +1,38 @@
 <script lang="ts">
+  import { onMount } from "svelte";
+
   import type { Dispatch } from "../core/commands";
   import {
-    MAX_BOUND,
     MAX_ZOOM_DENOMINATOR,
-    MIN_BOUND,
     MIN_ZOOM_DENOMINATOR,
     type MimState,
     type Operation,
   } from "../core/state";
+  import type { VisibleGridExtent } from "../render/layout";
 
   export let state: MimState;
   export let dispatch: Dispatch;
+  export let visibleExtent: VisibleGridExtent;
 
+  let fullscreenActive = false;
+  let fullscreenAvailable = false;
   let proximity = 0;
+
+  onMount(() => {
+    const syncFullscreen = () => fullscreenActive = document.fullscreenElement !== null;
+    fullscreenAvailable = document.fullscreenEnabled;
+    document.addEventListener("fullscreenchange", syncFullscreen);
+    syncFullscreen();
+    return () => document.removeEventListener("fullscreenchange", syncFullscreen);
+  });
+
+  async function toggleFullscreen(): Promise<void> {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+    } else {
+      await document.documentElement.requestFullscreen();
+    }
+  }
 
   function trackPointer(event: PointerEvent): void {
     if (event.pointerType === "touch") return;
@@ -88,29 +108,15 @@
     >+</button>
   </div>
 
-  <label>
-    <span>X</span>
-    <input
-      aria-label="X bound"
-      max={MAX_BOUND}
-      min={MIN_BOUND}
-      type="number"
-      value={state.columns}
-      on:change={(event) => dispatch({ type: "set-bound", axis: "x", value: numberValue(event) })}
-    />
-  </label>
+  <div class="extent-value" aria-label="Visible horizontal cells">
+    <span>M</span>
+    <strong>{visibleExtent.columns}</strong>
+  </div>
 
-  <label>
-    <span>Y</span>
-    <input
-      aria-label="Y bound"
-      max={MAX_BOUND}
-      min={MIN_BOUND}
-      type="number"
-      value={state.rows}
-      on:change={(event) => dispatch({ type: "set-bound", axis: "y", value: numberValue(event) })}
-    />
-  </label>
+  <div class="extent-value" aria-label="Visible vertical cells">
+    <span>N</span>
+    <strong>{visibleExtent.rows}</strong>
+  </div>
 
   <label class="check">
     <input
@@ -120,6 +126,22 @@
     />
     <span>prime results</span>
   </label>
+
+  <label class="check">
+    <input
+      checked={state.pinCursor}
+      type="checkbox"
+      on:change={() => dispatch({ type: "toggle-pin-cursor" })}
+    />
+    <span>pin cursor</span>
+  </label>
+
+  <button
+    aria-label={fullscreenActive ? "Exit full screen" : "Enter full screen"}
+    disabled={!fullscreenAvailable}
+    type="button"
+    on:click={toggleFullscreen}
+  >{fullscreenActive ? "Exit full screen" : "Full screen"}</button>
 
   <button
     class="reset-button"

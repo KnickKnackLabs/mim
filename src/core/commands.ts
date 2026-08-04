@@ -9,11 +9,11 @@ export type Command =
   | { type: "repeat-motion"; reverse: boolean }
   | { type: "reset-defaults" }
   | { type: "start-motion" }
-  | { type: "set-bound"; axis: "x" | "y"; value: number }
   | { type: "set-cursor"; x: number; y: number }
   | { type: "set-operation"; operation: Operation }
   | { type: "set-zoom-denominator"; value: number }
   | { type: "toggle-help" }
+  | { type: "toggle-pin-cursor" }
   | { type: "toggle-prime-results" }
   | { type: "zoom-at"; anchorX: number; anchorY: number; denominator: number }
   | { type: "zoom-in" }

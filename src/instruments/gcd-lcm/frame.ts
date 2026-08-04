@@ -1,13 +1,14 @@
 import type { MimState } from "../../core/state";
 import type { DisplayCell, DisplayFrame } from "../../render/frame";
+import type { VisibleGridExtent } from "../../render/layout";
 import { isPrime, operate } from "./math";
 
-export function buildFrame(state: MimState): DisplayFrame {
+export function buildFrame(state: MimState, extent: VisibleGridExtent): DisplayFrame {
   const raw: Array<Omit<DisplayCell, "intensity">> = [];
   let maximumValue = 1;
 
-  for (let y = 1; y <= state.rows; y += 1) {
-    for (let x = 1; x <= state.columns; x += 1) {
+  for (let y = extent.minY; y <= extent.maxY; y += 1) {
+    for (let x = extent.minX; x <= extent.maxX; x += 1) {
       const value = operate(state.operation, x, y);
       maximumValue = Math.max(maximumValue, value);
       raw.push({
@@ -29,9 +30,9 @@ export function buildFrame(state: MimState): DisplayFrame {
       ...cell,
       intensity: Math.log1p(cell.value) / denominator,
     })),
-    columns: state.columns,
+    columns: Math.max(1, extent.columns),
     maximumValue,
-    rows: state.rows,
+    rows: Math.max(1, extent.rows),
     viewX: state.viewX,
     viewY: state.viewY,
     zoomDenominator: state.zoomDenominator,

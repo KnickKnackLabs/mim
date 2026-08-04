@@ -6,6 +6,37 @@ export interface SquareGridLayout {
   top: number;
 }
 
+export interface VisibleGridExtent {
+  columns: number;
+  maxX: number;
+  maxY: number;
+  minX: number;
+  minY: number;
+  rows: number;
+}
+
+export function visibleGridExtent(
+  width: number,
+  height: number,
+  zoomDenominator: number,
+  viewX = 0,
+  viewY = 0,
+): VisibleGridExtent {
+  const cellSize = Math.min(width, height) / zoomDenominator;
+  const minX = Math.max(1, Math.floor(viewX) + 1);
+  const minY = Math.max(1, Math.floor(viewY) + 1);
+  const maxX = Math.ceil(viewX + width / cellSize);
+  const maxY = Math.ceil(viewY + height / cellSize);
+  return {
+    columns: Math.max(0, maxX - minX + 1),
+    maxX,
+    maxY,
+    minX,
+    minY,
+    rows: Math.max(0, maxY - minY + 1),
+  };
+}
+
 export function squareGridAtScale(
   width: number,
   height: number,

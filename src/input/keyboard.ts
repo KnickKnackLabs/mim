@@ -25,8 +25,24 @@ export function createKeySequenceState(): KeySequenceState {
   return { count: "" };
 }
 
+export function movementForKey(key: string): readonly [number, number] | null {
+  return movements[key] ?? null;
+}
+
+export function movementForKeys(keys: Iterable<string>): readonly [number, number] {
+  let dx = 0;
+  let dy = 0;
+  for (const key of keys) {
+    const movement = movementForKey(key);
+    if (!movement) continue;
+    dx += movement[0];
+    dy += movement[1];
+  }
+  return [Math.sign(dx), Math.sign(dy)];
+}
+
 export function commandForKey(key: string, count = 1, shiftKey = false): Command | null {
-  const movement = movements[key];
+  const movement = movementForKey(key);
   if (movement) {
     return { type: "move-cursor", dx: movement[0] * count, dy: movement[1] * count };
   }

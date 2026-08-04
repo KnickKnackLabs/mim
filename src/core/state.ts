@@ -11,7 +11,6 @@ export interface Motion {
 }
 
 export interface MimState {
-  columns: number;
   cursor: Cursor | null;
   helpVisible: boolean;
   recordedMotion: Motion[];
@@ -19,21 +18,18 @@ export interface MimState {
   motionEnd: Cursor | null;
   motionStart: Cursor | null;
   operation: Operation;
-  rows: number;
+  pinCursor: boolean;
   showPrimeResults: boolean;
   viewX: number;
   viewY: number;
   zoomDenominator: number;
 }
 
-export const MIN_BOUND = 2;
-export const MAX_BOUND = 256;
 export const MIN_ZOOM_DENOMINATOR = 1;
 export const MAX_ZOOM_DENOMINATOR = 256;
 
 export function createInitialState(): MimState {
   return {
-    columns: 96,
     cursor: null,
     helpVisible: false,
     recordedMotion: [],
@@ -41,7 +37,7 @@ export function createInitialState(): MimState {
     motionEnd: null,
     motionStart: null,
     operation: "lcm",
-    rows: 96,
+    pinCursor: false,
     showPrimeResults: true,
     viewX: 0,
     viewY: 0,

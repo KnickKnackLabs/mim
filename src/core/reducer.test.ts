@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { reduceState } from "./reducer";
-import { createInitialState, MAX_BOUND, MIN_BOUND } from "./state";
+import { createInitialState } from "./state";
 
 describe("reduceState", () => {
   test("applies semantic operation commands", () => {
@@ -21,11 +21,16 @@ describe("reduceState", () => {
     expect(reduceState(initial, { type: "close-help" })).toBe(initial);
   });
 
+  test("toggles pinned cursor movement", () => {
+    const initial = createInitialState();
+    expect(reduceState(initial, { type: "toggle-pin-cursor" }).pinCursor).toBe(true);
+  });
+
   test("moves and clamps the cursor", () => {
     let state = reduceState(createInitialState(), { type: "move-cursor", dx: -2, dy: 4 });
     expect(state.cursor).toEqual({ x: 1, y: 5 });
     state = reduceState(state, { type: "move-cursor", dx: 500, dy: 500 });
-    expect(state.cursor).toEqual({ x: state.columns, y: state.rows });
+    expect(state.cursor).toEqual({ x: 501, y: 505 });
   });
 
   test("records, replays, and retraces a movement sequence", () => {
@@ -73,15 +78,10 @@ describe("reduceState", () => {
     expect(reduceState(state, { type: "reset-defaults" })).toEqual(createInitialState());
   });
 
-  test("clamps bounds and an existing cursor", () => {
-    let state = reduceState(createInitialState(), { type: "set-cursor", x: 40, y: 40 });
-    state = reduceState(state, { type: "set-bound", axis: "x", value: 3 });
-    state = reduceState(state, { type: "set-bound", axis: "y", value: 1 });
-    expect(state.columns).toBe(3);
-    expect(state.rows).toBe(MIN_BOUND);
-    expect(state.cursor).toEqual({ x: 3, y: MIN_BOUND });
-
-    state = reduceState(state, { type: "set-bound", axis: "x", value: 999 });
-    expect(state.columns).toBe(MAX_BOUND);
+  test("keeps cursor coordinates in the positive integer lattice", () => {
+    let state = reduceState(createInitialState(), { type: "set-cursor", x: -4, y: 0 });
+    expect(state.cursor).toEqual({ x: 1, y: 1 });
+    state = reduceState(state, { type: "move-cursor", dx: -3, dy: -2 });
+    expect(state.cursor).toEqual({ x: 1, y: 1 });
   });
 });

@@ -1,9 +1,7 @@
 import type { Command } from "./commands";
 import {
   createInitialState,
-  MAX_BOUND,
   MAX_ZOOM_DENOMINATOR,
-  MIN_BOUND,
   MIN_ZOOM_DENOMINATOR,
   type Cursor,
   type MimState,
@@ -25,10 +23,10 @@ function stepZoom(current: number, direction: "in" | "out"): number {
   return normalizeZoomDenominator(current + (direction === "in" ? -1 : 1));
 }
 
-function clampCursor(cursor: Cursor, state: MimState): Cursor {
+function clampCursor(cursor: Cursor): Cursor {
   return {
-    x: clamp(Math.round(cursor.x), 1, state.columns),
-    y: clamp(Math.round(cursor.y), 1, state.rows),
+    x: Math.max(1, Math.round(cursor.x)),
+    y: Math.max(1, Math.round(cursor.y)),
   };
 }
 
@@ -53,6 +51,9 @@ export function reduceState(state: MimState, command: Command): MimState {
 
     case "toggle-help":
       return { ...state, helpVisible: !state.helpVisible };
+
+    case "toggle-pin-cursor":
+      return { ...state, pinCursor: !state.pinCursor };
 
     case "start-motion": {
       const cursor = state.cursor ?? { x: 1, y: 1 };
@@ -120,7 +121,7 @@ export function reduceState(state: MimState, command: Command): MimState {
     }
 
     case "set-cursor":
-      return { ...state, cursor: clampCursor(command, state) };
+      return { ...state, cursor: clampCursor(command) };
 
     case "pan-view":
       return Number.isFinite(command.dx) && Number.isFinite(command.dy)
@@ -133,7 +134,6 @@ export function reduceState(state: MimState, command: Command): MimState {
         ...state,
         cursor: clampCursor(
           { x: cursor.x + command.dx, y: cursor.y + command.dy },
-          state,
         ),
         recordedMotion: state.motionStart && !state.motionEnd
           ? state.recordedMotion
@@ -153,24 +153,9 @@ export function reduceState(state: MimState, command: Command): MimState {
       for (const motion of motions) {
         cursor = clampCursor(
           { x: cursor.x + motion.dx, y: cursor.y + motion.dy },
-          state,
         );
       }
       return { ...state, cursor };
-    }
-
-    case "set-bound": {
-      if (!Number.isFinite(command.value)) return state;
-      const value = clamp(Math.round(command.value), MIN_BOUND, MAX_BOUND);
-      const next = command.axis === "x"
-        ? { ...state, columns: value }
-        : { ...state, rows: value };
-      return {
-        ...next,
-        cursor: next.cursor ? clampCursor(next.cursor, next) : null,
-        motionEnd: next.motionEnd ? clampCursor(next.motionEnd, next) : null,
-        motionStart: next.motionStart ? clampCursor(next.motionStart, next) : null,
-      };
     }
   }
 }

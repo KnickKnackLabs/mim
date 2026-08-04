@@ -3,15 +3,25 @@
 
   import type { Dispatch } from "../core/commands";
   import type { MimState } from "../core/state";
-  import { createKeySequenceState, interpretKey } from "../input/keyboard";
+  import {
+    createKeySequenceState,
+    interpretKey,
+    movementForKey,
+    movementForKeys,
+  } from "../input/keyboard";
   import { cellForPoint } from "../input/pointer";
   import { wheelZoomDenominator } from "../input/wheelZoom";
   import { buildFrame } from "../instruments/gcd-lcm/frame";
   import { renderFrame } from "../render/canvas/render";
-  import { squareGridAtScale } from "../render/layout";
+  import {
+    squareGridAtScale,
+    visibleGridExtent,
+    type VisibleGridExtent,
+  } from "../render/layout";
 
   export let state: MimState;
   export let dispatch: Dispatch;
+  export let visibleExtent: VisibleGridExtent = visibleGridExtent(1, 1, 1);
 
   let canvas: HTMLCanvasElement;
   let cssHeight = 1;
@@ -21,6 +31,9 @@
   let dragPointerId: number | null = null;
   let dragStartX = 0;
   let dragStartY = 0;
+  let heldDelay: number | null = null;
+  let heldInterval: number | null = null;
+  const heldMovementKeys = new Set<string>();
   let keySequence = createKeySequenceState();
   let pendingWheelDelta = 0;
   let pendingWheelX = 0;
@@ -29,7 +42,17 @@
   let pixelRatio = 1;
   let wheelFrame: number | null = null;
 
-  $: frame = buildFrame(state);
+  const HELD_MOVEMENT_DELAY_MS = 180;
+  const HELD_MOVEMENT_INTERVAL_MS = 55;
+
+  $: visibleExtent = visibleGridExtent(
+    cssWidth,
+    cssHeight,
+    state.zoomDenominator,
+    state.viewX,
+    state.viewY,
+  );
+  $: frame = buildFrame(state, visibleExtent);
   $: if (canvas && cssWidth > 1 && cssHeight > 1) {
     renderFrame(canvas, frame, { cssHeight, cssWidth, pixelRatio });
   }
@@ -44,12 +67,49 @@
     canvas.focus();
     return () => {
       observer.disconnect();
+      clearHeldMovement();
       if (wheelFrame !== null) cancelAnimationFrame(wheelFrame);
     };
   });
 
+  function dispatchHeldMovement(): void {
+    const [dx, dy] = movementForKeys(heldMovementKeys);
+    if (dx !== 0 || dy !== 0) dispatch({ type: "move-cursor", dx, dy });
+  }
+
+  function scheduleHeldMovement(): void {
+    if (heldDelay !== null || heldInterval !== null) return;
+    heldDelay = window.setTimeout(() => {
+      heldDelay = null;
+      dispatchHeldMovement();
+      heldInterval = window.setInterval(
+        dispatchHeldMovement,
+        HELD_MOVEMENT_INTERVAL_MS,
+      );
+    }, HELD_MOVEMENT_DELAY_MS);
+  }
+
+  function clearHeldMovement(): void {
+    if (heldDelay !== null) window.clearTimeout(heldDelay);
+    if (heldInterval !== null) window.clearInterval(heldInterval);
+    heldDelay = null;
+    heldInterval = null;
+    heldMovementKeys.clear();
+  }
+
+  function handleBlur(): void {
+    keySequence = createKeySequenceState();
+    clearHeldMovement();
+  }
+
   function handleKeydown(event: KeyboardEvent): void {
     if (event.metaKey || event.ctrlKey || event.altKey) return;
+    if (movementForKey(event.key)) {
+      event.preventDefault();
+      if (event.repeat) return;
+      heldMovementKeys.add(event.key);
+      scheduleHeldMovement();
+    }
     const result = interpretKey(keySequence, event.key, event.shiftKey);
     keySequence = result.state;
     if (!result.handled) return;
@@ -57,13 +117,20 @@
     if (result.command) dispatch(result.command);
   }
 
+  function handleKeyup(event: KeyboardEvent): void {
+    if (!movementForKey(event.key)) return;
+    event.preventDefault();
+    heldMovementKeys.delete(event.key);
+    if (heldMovementKeys.size === 0) clearHeldMovement();
+  }
+
   function handlePointer(event: PointerEvent): void {
     const bounds = canvas.getBoundingClientRect();
     const layout = squareGridAtScale(
       bounds.width,
       bounds.height,
-      state.columns,
-      state.rows,
+      Math.max(1, visibleExtent.columns),
+      Math.max(1, visibleExtent.rows),
       state.zoomDenominator,
       state.viewX,
       state.viewY,
@@ -151,8 +218,9 @@
   bind:this={canvas}
   aria-label="Interactive GCD and LCM lattice"
   class:panning
-  on:blur={() => keySequence = createKeySequenceState()}
+  on:blur={handleBlur}
   on:keydown={handleKeydown}
+  on:keyup={handleKeyup}
   on:pointercancel={endPointer}
   on:pointerdown={beginPointer}
   on:pointermove={movePointer}
