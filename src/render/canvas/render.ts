@@ -49,13 +49,13 @@ export function renderFrame(
   const gap = Math.min(1, Math.max(0.15, layout.cellSize * 0.04));
 
   for (const cell of frame.cells) {
-    const left = layout.left + (cell.x - 1) * layout.cellSize;
-    const top = layout.top + (cell.y - 1) * layout.cellSize;
+    const left = layout.left + (cell.column - 1) * layout.cellSize;
+    const top = layout.top + (cell.row - 1) * layout.cellSize;
     const visibleSize = Math.max(0, layout.cellSize - gap * 2);
     context.fillStyle = fillFor(cell);
     context.fillRect(left + gap, top + gap, visibleSize, visibleSize);
 
-    if (cell.diagonal && cell.accent === null) {
+    if (cell.equalValues && cell.accent === null) {
       context.fillStyle = "rgba(224, 242, 254, 0.28)";
       context.fillRect(left + gap, top + gap, visibleSize, visibleSize);
     }

@@ -78,6 +78,14 @@ describe("reduceState", () => {
     expect(reduceState(state, { type: "reset-defaults" })).toEqual(createInitialState());
   });
 
+  test("one-sided axes stop cursor motion at their first generated value", () => {
+    let state = reduceState(createInitialState(), { type: "set-cursor", x: -4, y: -3 });
+    state = reduceState(state, { type: "set-axis", axis: "y", kind: "naturals" });
+    expect(state.cursor).toEqual({ x: -4, y: 0 });
+    state = reduceState(state, { type: "move-cursor", dx: 0, dy: -1 });
+    expect(state.cursor).toEqual({ x: -4, y: 0 });
+  });
+
   test("normalizes selected coordinates to integers without changing their sign", () => {
     let state = reduceState(createInitialState(), { type: "set-cursor", x: -4.4, y: 0.4 });
     expect(state.cursor).toEqual({ x: -4, y: 0 });

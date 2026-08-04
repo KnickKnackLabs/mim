@@ -6,15 +6,30 @@
   export let dispatch: Dispatch;
 
   let closeButton: HTMLButtonElement;
+  let fullscreenActive = false;
+  let fullscreenAvailable = false;
 
   onMount(() => {
     const previousFocus = document.activeElement;
+    const syncFullscreen = () => fullscreenActive = document.fullscreenElement !== null;
+    fullscreenAvailable = document.fullscreenEnabled;
+    document.addEventListener("fullscreenchange", syncFullscreen);
+    syncFullscreen();
     closeButton.focus();
 
     return () => {
+      document.removeEventListener("fullscreenchange", syncFullscreen);
       if (previousFocus instanceof HTMLElement) previousFocus.focus();
     };
   });
+
+  async function toggleFullscreen(): Promise<void> {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+    } else {
+      await document.documentElement.requestFullscreen();
+    }
+  }
 </script>
 
 <div class="help-overlay" aria-labelledby="help-title" role="dialog">
@@ -49,9 +64,22 @@
       <div><dt><kbd>p</kbd></dt><dd>toggle prime results</dd></div>
       <div><dt>click</dt><dd>select a cell</dd></div>
       <div><dt>drag</dt><dd>pan the view</dd></div>
+      <div><dt>X / Y axes</dt><dd>choose how grid indices map to mathematical values</dd></div>
       <div><dt>M / N</dt><dd>show the derived visible lattice dimensions</dd></div>
       <div><dt>Full screen</dt><dd>enter browser fullscreen; Escape exits</dd></div>
       <div><dt>Reset</dt><dd>restore the instrument defaults</dd></div>
     </dl>
+
+    <div class="help-actions">
+      <button
+        disabled={!fullscreenAvailable}
+        type="button"
+        on:click={toggleFullscreen}
+      >{fullscreenActive ? "Exit full screen" : "Enter full screen"}</button>
+      <button
+        type="button"
+        on:click={() => dispatch({ type: "reset-defaults" })}
+      >Reset instrument</button>
+    </div>
   </div>
 </div>

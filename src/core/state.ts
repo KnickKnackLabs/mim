@@ -1,3 +1,5 @@
+import type { AxisKind } from "./axis";
+
 export type Operation = "gcd" | "lcm";
 
 export interface Cursor {
@@ -22,6 +24,8 @@ export interface MimState {
   showPrimeResults: boolean;
   viewX: number;
   viewY: number;
+  xAxis: AxisKind;
+  yAxis: AxisKind;
   zoomDenominator: number;
 }
 
@@ -41,6 +45,8 @@ export function createInitialState(): MimState {
     showPrimeResults: true,
     viewX: 0,
     viewY: 0,
+    xAxis: "integers",
+    yAxis: "integers",
     zoomDenominator: 48,
   };
 }

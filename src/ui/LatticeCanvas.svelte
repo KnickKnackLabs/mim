@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
 
+  import { axisValueAt } from "../core/axis";
   import type { Dispatch } from "../core/commands";
   import type { MimState } from "../core/state";
   import {
@@ -165,6 +166,10 @@
       state.viewY,
     );
     const cursor = cellForPoint(event.clientX, event.clientY, bounds, layout);
+    if (
+      axisValueAt(state.xAxis, cursor.x) === null
+      || axisValueAt(state.yAxis, cursor.y) === null
+    ) return;
     dispatch({ type: "set-cursor", ...cursor });
   }
 

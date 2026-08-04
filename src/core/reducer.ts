@@ -1,3 +1,4 @@
+import { axisMinimumIndex, type AxisKind } from "./axis";
 import type { Command } from "./commands";
 import {
   createInitialState,
@@ -23,11 +24,21 @@ function stepZoom(current: number, direction: "in" | "out"): number {
   return normalizeZoomDenominator(current + (direction === "in" ? -1 : 1));
 }
 
-function normalizeCursor(cursor: Cursor): Cursor {
+function normalizeAxisIndex(index: number, kind: AxisKind): number {
+  const rounded = Math.round(index);
+  const minimum = axisMinimumIndex(kind);
+  return minimum === null ? rounded : Math.max(minimum, rounded);
+}
+
+function normalizeCursor(cursor: Cursor, state: MimState): Cursor {
   return {
-    x: Math.round(cursor.x),
-    y: Math.round(cursor.y),
+    x: normalizeAxisIndex(cursor.x, state.xAxis),
+    y: normalizeAxisIndex(cursor.y, state.yAxis),
   };
+}
+
+function defaultCursor(state: MimState): Cursor {
+  return normalizeCursor({ x: 0, y: 0 }, state);
 }
 
 export function reduceState(state: MimState, command: Command): MimState {
@@ -56,7 +67,7 @@ export function reduceState(state: MimState, command: Command): MimState {
       return { ...state, pinCursor: !state.pinCursor };
 
     case "start-motion": {
-      const cursor = state.cursor ?? { x: 0, y: 0 };
+      const cursor = state.cursor ?? defaultCursor(state);
       return {
         ...state,
         cursor,
@@ -77,6 +88,18 @@ export function reduceState(state: MimState, command: Command): MimState {
 
     case "set-operation":
       return { ...state, operation: command.operation };
+
+    case "set-axis": {
+      const next = command.axis === "x"
+        ? { ...state, xAxis: command.kind }
+        : { ...state, yAxis: command.kind };
+      return {
+        ...next,
+        cursor: next.cursor ? normalizeCursor(next.cursor, next) : null,
+        motionEnd: next.motionEnd ? normalizeCursor(next.motionEnd, next) : null,
+        motionStart: next.motionStart ? normalizeCursor(next.motionStart, next) : null,
+      };
+    }
 
     case "toggle-prime-results":
       return { ...state, showPrimeResults: !state.showPrimeResults };
@@ -121,7 +144,7 @@ export function reduceState(state: MimState, command: Command): MimState {
     }
 
     case "set-cursor":
-      return { ...state, cursor: normalizeCursor(command) };
+      return { ...state, cursor: normalizeCursor(command, state) };
 
     case "pan-view":
       return Number.isFinite(command.dx) && Number.isFinite(command.dy)
@@ -129,17 +152,21 @@ export function reduceState(state: MimState, command: Command): MimState {
         : state;
 
     case "move-cursor": {
-      const cursor = state.cursor ?? { x: 0, y: 0 };
+      const cursor = state.cursor ?? defaultCursor(state);
+      const nextCursor = normalizeCursor(
+        { x: cursor.x + command.dx, y: cursor.y + command.dy },
+        state,
+      );
+      const motion = { dx: nextCursor.x - cursor.x, dy: nextCursor.y - cursor.y };
+      const moved = motion.dx !== 0 || motion.dy !== 0;
       return {
         ...state,
-        cursor: normalizeCursor(
-          { x: cursor.x + command.dx, y: cursor.y + command.dy },
-        ),
+        cursor: nextCursor,
         recordedMotion: state.motionStart && !state.motionEnd
           ? state.recordedMotion
-          : [{ dx: command.dx, dy: command.dy }],
-        recordingMotion: state.motionStart && !state.motionEnd
-          ? [...state.recordingMotion, { dx: command.dx, dy: command.dy }]
+          : moved ? [motion] : state.recordedMotion,
+        recordingMotion: state.motionStart && !state.motionEnd && moved
+          ? [...state.recordingMotion, motion]
           : state.recordingMotion,
       };
     }
@@ -149,10 +176,11 @@ export function reduceState(state: MimState, command: Command): MimState {
       const motions = command.reverse
         ? [...state.recordedMotion].reverse().map(({ dx, dy }) => ({ dx: -dx, dy: -dy }))
         : state.recordedMotion;
-      let cursor = state.cursor ?? { x: 0, y: 0 };
+      let cursor = state.cursor ?? defaultCursor(state);
       for (const motion of motions) {
         cursor = normalizeCursor(
           { x: cursor.x + motion.dx, y: cursor.y + motion.dy },
+          state,
         );
       }
       return { ...state, cursor };

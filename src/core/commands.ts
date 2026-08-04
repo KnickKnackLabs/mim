@@ -1,3 +1,4 @@
+import type { AxisKind } from "./axis";
 import type { Operation } from "./state";
 
 export type Command =
@@ -9,6 +10,7 @@ export type Command =
   | { type: "repeat-motion"; reverse: boolean }
   | { type: "reset-defaults" }
   | { type: "start-motion" }
+  | { type: "set-axis"; axis: "x" | "y"; kind: AxisKind }
   | { type: "set-cursor"; x: number; y: number }
   | { type: "set-operation"; operation: Operation }
   | { type: "set-zoom-denominator"; value: number }

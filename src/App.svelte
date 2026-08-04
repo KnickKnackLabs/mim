@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { axisValueAt } from "./core/axis";
   import type { Command } from "./core/commands";
   import { reduceState } from "./core/reducer";
   import { createInitialState } from "./core/state";
@@ -52,9 +53,11 @@
     dispatch(command);
   }
 
-  $: selectedValue = state.cursor
-    ? operate(state.operation, state.cursor.x, state.cursor.y)
-    : null;
+  $: selectedX = state.cursor ? axisValueAt(state.xAxis, state.cursor.x) : null;
+  $: selectedY = state.cursor ? axisValueAt(state.yAxis, state.cursor.y) : null;
+  $: selectedValue = selectedX === null || selectedY === null
+    ? null
+    : operate(state.operation, selectedX, selectedY);
   $: recordedMotion = state.motionStart && state.motionEnd
     ? {
         dx: state.motionEnd.x - state.motionStart.x,
@@ -67,11 +70,17 @@
 <svelte:window on:keydown={handleGlobalHelpKeydown} />
 
 <main>
-  <Controls {state} {dispatch} {visibleExtent} />
+  <Controls {state} {dispatch} />
 
   <div class="instrument">
     <LatticeCanvas {state} {dispatch} bind:visibleExtent />
   </div>
+
+  <aside class="camera-readout" aria-label="Camera status">
+    <span>zoom <strong>1/{state.zoomDenominator}</strong></span>
+    <span>M <strong>{visibleExtent.columns}</strong></span>
+    <span>N <strong>{visibleExtent.rows}</strong></span>
+  </aside>
 
   <aside class="readout" aria-live="polite">
     {#if state.motionStart && !state.motionEnd}
@@ -79,8 +88,8 @@
     {:else if recordedMotion}
       <span>{recordedMotion.steps} motions · Δ({recordedMotion.dx}, {recordedMotion.dy})</span>
     {/if}
-    {#if state.cursor && selectedValue !== null}
-      <strong>{state.operation}({state.cursor.x}, {state.cursor.y})</strong>
+    {#if state.cursor && selectedX !== null && selectedY !== null && selectedValue !== null}
+      <strong>{state.operation}({selectedX}, {selectedY})</strong>
       <span>= {selectedValue}</span>
     {:else}
       <span>point at the lattice</span>

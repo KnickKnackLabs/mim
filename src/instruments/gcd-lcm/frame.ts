@@ -1,3 +1,4 @@
+import { axisValueAt } from "../../core/axis";
 import type { MimState } from "../../core/state";
 import type { DisplayCell, DisplayFrame } from "../../render/frame";
 import type { VisibleGridExtent } from "../../render/layout";
@@ -7,19 +8,27 @@ export function buildFrame(state: MimState, extent: VisibleGridExtent): DisplayF
   const raw: Array<Omit<DisplayCell, "intensity">> = [];
   let maximumValue = 1;
 
-  for (let y = extent.minY; y <= extent.maxY; y += 1) {
-    for (let x = extent.minX; x <= extent.maxX; x += 1) {
-      const value = operate(state.operation, x, y);
+  for (let row = extent.minY; row <= extent.maxY; row += 1) {
+    const yValue = axisValueAt(state.yAxis, row);
+    if (yValue === null) continue;
+
+    for (let column = extent.minX; column <= extent.maxX; column += 1) {
+      const xValue = axisValueAt(state.xAxis, column);
+      if (xValue === null) continue;
+
+      const value = operate(state.operation, xValue, yValue);
       maximumValue = Math.max(maximumValue, value);
       raw.push({
         accent: state.showPrimeResults && isPrime(value) ? "prime" : null,
-        diagonal: x === y,
-        motionEnd: state.motionEnd?.x === x && state.motionEnd?.y === y,
-        motionStart: state.motionStart?.x === x && state.motionStart?.y === y,
-        selected: state.cursor?.x === x && state.cursor?.y === y,
+        column,
+        equalValues: xValue === yValue,
+        motionEnd: state.motionEnd?.x === column && state.motionEnd?.y === row,
+        motionStart: state.motionStart?.x === column && state.motionStart?.y === row,
+        row,
+        selected: state.cursor?.x === column && state.cursor?.y === row,
         value,
-        x,
-        y,
+        xValue,
+        yValue,
       });
     }
   }
