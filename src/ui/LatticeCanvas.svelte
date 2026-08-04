@@ -2,9 +2,10 @@
   import { onMount } from "svelte";
 
   import type { Dispatch } from "../core/commands";
-  import { GOLDEN_ZOOM_STEP, type MimState } from "../core/state";
+  import type { MimState } from "../core/state";
   import { createKeySequenceState, interpretKey } from "../input/keyboard";
   import { cellForPoint } from "../input/pointer";
+  import { wheelZoomDenominator } from "../input/wheelZoom";
   import { buildFrame } from "../instruments/gcd-lcm/frame";
   import { renderFrame } from "../render/canvas/render";
   import { squareGridAtScale } from "../render/layout";
@@ -114,8 +115,10 @@
     wheelFrame = null;
     const bounds = canvas.getBoundingClientRect();
     const cellSize = Math.min(bounds.width, bounds.height) / state.zoomDenominator;
-    const factor = Math.pow(GOLDEN_ZOOM_STEP, pendingWheelDelta / 100);
-    const denominator = Math.round(state.zoomDenominator * factor);
+    const denominator = wheelZoomDenominator(
+      state.zoomDenominator,
+      pendingWheelDelta,
+    );
     if (denominator === state.zoomDenominator) return;
 
     pendingWheelDelta = 0;

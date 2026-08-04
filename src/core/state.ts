@@ -30,7 +30,6 @@ export const MIN_BOUND = 2;
 export const MAX_BOUND = 160;
 export const MIN_ZOOM_DENOMINATOR = 1;
 export const MAX_ZOOM_DENOMINATOR = 96;
-export const GOLDEN_ZOOM_STEP = Math.pow((1 + Math.sqrt(5)) / 2, 1 / 8);
 
 export function createInitialState(): MimState {
   return {
