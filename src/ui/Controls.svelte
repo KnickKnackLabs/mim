@@ -73,9 +73,9 @@
           aria-label="Zoom denominator"
           max={MAX_ZOOM_DENOMINATOR}
           min={MIN_ZOOM_DENOMINATOR}
-          step="any"
+          step="1"
           type="number"
-          value={Number(state.zoomDenominator.toFixed(2))}
+          value={state.zoomDenominator}
           on:change={(event) => dispatch({ type: "set-zoom-denominator", value: numberValue(event) })}
         />
       </div>

@@ -52,17 +52,24 @@ describe("reduceState", () => {
     expect(state.cursor).toEqual({ x: 50, y: 50 });
   });
 
-  test("pans and zooms around a stable camera anchor", () => {
+  test("keeps unit-fraction zooms anchored and steps through integer denominators", () => {
     let state = reduceState(createInitialState(), { type: "pan-view", dx: 2.5, dy: -1 });
     state = reduceState(state, {
       type: "zoom-at",
       anchorX: 10,
       anchorY: 20,
-      factor: 0.5,
+      denominator: 24,
     });
     expect(state.zoomDenominator).toBe(24);
     expect(state.viewX).toBe(7.5);
     expect(state.viewY).toBe(9);
+
+    state = reduceState(state, { type: "set-zoom-denominator", value: 13.2 });
+    expect(state.zoomDenominator).toBe(13);
+    state = reduceState(state, { type: "zoom-out" });
+    expect(state.zoomDenominator).toBe(14);
+    state = reduceState(state, { type: "zoom-in" });
+    expect(state.zoomDenominator).toBe(13);
     expect(reduceState(state, { type: "reset-defaults" })).toEqual(createInitialState());
   });
 

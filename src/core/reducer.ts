@@ -1,7 +1,6 @@
 import type { Command } from "./commands";
 import {
   createInitialState,
-  GOLDEN_ZOOM_STEP,
   MAX_BOUND,
   MAX_ZOOM_DENOMINATOR,
   MIN_BOUND,
@@ -14,13 +13,16 @@ function clamp(value: number, minimum: number, maximum: number): number {
   return Math.min(maximum, Math.max(minimum, value));
 }
 
-function stepZoom(current: number, direction: "in" | "out"): number {
-  const factor = direction === "in" ? 1 / GOLDEN_ZOOM_STEP : GOLDEN_ZOOM_STEP;
+function normalizeZoomDenominator(value: number): number {
   return clamp(
-    current * factor,
+    Math.round(value),
     MIN_ZOOM_DENOMINATOR,
     MAX_ZOOM_DENOMINATOR,
   );
+}
+
+function stepZoom(current: number, direction: "in" | "out"): number {
+  return normalizeZoomDenominator(current + (direction === "in" ? -1 : 1));
 }
 
 function clampCursor(cursor: Cursor, state: MimState): Cursor {
@@ -80,11 +82,7 @@ export function reduceState(state: MimState, command: Command): MimState {
 
     case "set-zoom-denominator": {
       if (!Number.isFinite(command.value)) return state;
-      const zoomDenominator = clamp(
-        command.value,
-        MIN_ZOOM_DENOMINATOR,
-        MAX_ZOOM_DENOMINATOR,
-      );
+      const zoomDenominator = normalizeZoomDenominator(command.value);
       return zoomDenominator === state.zoomDenominator
         ? state
         : { ...state, zoomDenominator };
@@ -94,14 +92,9 @@ export function reduceState(state: MimState, command: Command): MimState {
       if (
         !Number.isFinite(command.anchorX)
         || !Number.isFinite(command.anchorY)
-        || !Number.isFinite(command.factor)
-        || command.factor <= 0
+        || !Number.isFinite(command.denominator)
       ) return state;
-      const zoomDenominator = clamp(
-        state.zoomDenominator * command.factor,
-        MIN_ZOOM_DENOMINATOR,
-        MAX_ZOOM_DENOMINATOR,
-      );
+      const zoomDenominator = normalizeZoomDenominator(command.denominator);
       if (zoomDenominator === state.zoomDenominator) return state;
       const scale = zoomDenominator / state.zoomDenominator;
       return {

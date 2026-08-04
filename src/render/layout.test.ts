@@ -16,7 +16,7 @@ test("square cells cover a tall viewport without stretching", () => {
   expect(layout.cellSize * layout.rows).toBeGreaterThanOrEqual(1440);
 });
 
-test("fractional camera scale and view offsets share one layout", () => {
+test("unit-fraction camera scale and view offsets share one layout", () => {
   const layout = squareGridAtScale(1440, 900, 96, 96, 45, 2.5, -1);
   expect(layout.cellSize).toBe(20);
   expect(layout.left).toBe(-50);

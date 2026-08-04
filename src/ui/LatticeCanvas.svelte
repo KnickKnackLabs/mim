@@ -115,12 +115,15 @@
     const bounds = canvas.getBoundingClientRect();
     const cellSize = Math.min(bounds.width, bounds.height) / state.zoomDenominator;
     const factor = Math.pow(GOLDEN_ZOOM_STEP, pendingWheelDelta / 100);
+    const denominator = Math.round(state.zoomDenominator * factor);
+    if (denominator === state.zoomDenominator) return;
+
     pendingWheelDelta = 0;
     dispatch({
       type: "zoom-at",
       anchorX: pendingWheelX / cellSize,
       anchorY: pendingWheelY / cellSize,
-      factor,
+      denominator,
     });
   }
 
