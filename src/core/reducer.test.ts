@@ -28,6 +28,44 @@ describe("reduceState", () => {
     expect(state.cursor).toEqual({ x: state.columns, y: state.rows });
   });
 
+  test("records, replays, and retraces a movement sequence", () => {
+    let state = reduceState(createInitialState(), { type: "set-cursor", x: 40, y: 40 });
+    state = reduceState(state, { type: "start-motion" });
+    state = reduceState(state, { type: "move-cursor", dx: 3, dy: 0 });
+    state = reduceState(state, { type: "move-cursor", dx: 0, dy: -4 });
+    state = reduceState(state, { type: "move-cursor", dx: 0, dy: 2 });
+    state = reduceState(state, { type: "move-cursor", dx: -9, dy: 0 });
+    state = reduceState(state, { type: "finish-motion" });
+
+    expect(state.recordedMotion).toEqual([
+      { dx: 3, dy: 0 },
+      { dx: 0, dy: -4 },
+      { dx: 0, dy: 2 },
+      { dx: -9, dy: 0 },
+    ]);
+    expect(state.cursor).toEqual({ x: 34, y: 38 });
+
+    state = reduceState(state, { type: "set-cursor", x: 50, y: 50 });
+    state = reduceState(state, { type: "repeat-motion", reverse: false });
+    expect(state.cursor).toEqual({ x: 44, y: 48 });
+    state = reduceState(state, { type: "repeat-motion", reverse: true });
+    expect(state.cursor).toEqual({ x: 50, y: 50 });
+  });
+
+  test("pans and zooms around a stable camera anchor", () => {
+    let state = reduceState(createInitialState(), { type: "pan-view", dx: 2.5, dy: -1 });
+    state = reduceState(state, {
+      type: "zoom-at",
+      anchorX: 10,
+      anchorY: 20,
+      factor: 0.5,
+    });
+    expect(state.zoomDenominator).toBe(24);
+    expect(state.viewX).toBe(7.5);
+    expect(state.viewY).toBe(9);
+    expect(reduceState(state, { type: "reset-defaults" })).toEqual(createInitialState());
+  });
+
   test("clamps bounds and an existing cursor", () => {
     let state = reduceState(createInitialState(), { type: "set-cursor", x: 40, y: 40 });
     state = reduceState(state, { type: "set-bound", axis: "x", value: 3 });

@@ -29,7 +29,7 @@
     ? {
         dx: state.motionEnd.x - state.motionStart.x,
         dy: state.motionEnd.y - state.motionStart.y,
-        steps: state.lastMotion.length,
+        steps: state.recordedMotion.length,
       }
     : null;
 </script>

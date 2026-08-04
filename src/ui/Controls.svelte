@@ -131,6 +131,7 @@
     <span><kbd>g</kbd> gcd</span>
     <span><kbd>m</kbd> lcm</span>
     <span><kbd>p</kbd> primes</span>
+    <span><kbd>drag</kbd> pan</span>
     <span><kbd>wheel</kbd> cursor zoom</span>
     <span><kbd>s…e</kbd> record</span>
     <span><kbd>Space</kbd> repeat</span>

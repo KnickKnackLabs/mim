@@ -15,10 +15,16 @@
   let canvas: HTMLCanvasElement;
   let cssHeight = 1;
   let cssWidth = 1;
+  let dragLastX = 0;
+  let dragLastY = 0;
+  let dragPointerId: number | null = null;
+  let dragStartX = 0;
+  let dragStartY = 0;
   let keySequence = createKeySequenceState();
   let pendingWheelDelta = 0;
   let pendingWheelX = 0;
   let pendingWheelY = 0;
+  let panning = false;
   let pixelRatio = 1;
   let wheelFrame: number | null = null;
 
@@ -65,6 +71,45 @@
     dispatch({ type: "set-cursor", ...cursor });
   }
 
+  function beginPointer(event: PointerEvent): void {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    handlePointer(event);
+    canvas.focus();
+    dragPointerId = event.pointerId;
+    dragStartX = dragLastX = event.clientX;
+    dragStartY = dragLastY = event.clientY;
+    panning = false;
+    canvas.setPointerCapture(event.pointerId);
+  }
+
+  function movePointer(event: PointerEvent): void {
+    if (event.pointerId !== dragPointerId) {
+      handlePointer(event);
+      return;
+    }
+
+    const dx = event.clientX - dragLastX;
+    const dy = event.clientY - dragLastY;
+    if (!panning && Math.hypot(event.clientX - dragStartX, event.clientY - dragStartY) >= 4) {
+      panning = true;
+    }
+    dragLastX = event.clientX;
+    dragLastY = event.clientY;
+    if (!panning || (dx === 0 && dy === 0)) return;
+
+    const bounds = canvas.getBoundingClientRect();
+    const cellSize = Math.min(bounds.width, bounds.height) / state.zoomDenominator;
+    dispatch({ type: "pan-view", dx: -dx / cellSize, dy: -dy / cellSize });
+  }
+
+  function endPointer(event: PointerEvent): void {
+    if (event.pointerId !== dragPointerId) return;
+    if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+    dragPointerId = null;
+    panning = false;
+  }
+
   function applyWheelZoom(): void {
     wheelFrame = null;
     const bounds = canvas.getBoundingClientRect();
@@ -99,13 +144,13 @@
 <canvas
   bind:this={canvas}
   aria-label="Interactive GCD and LCM lattice"
+  class:panning
   on:blur={() => keySequence = createKeySequenceState()}
   on:keydown={handleKeydown}
-  on:pointerdown={(event) => {
-    handlePointer(event);
-    canvas.focus();
-  }}
-  on:pointermove={handlePointer}
+  on:pointercancel={endPointer}
+  on:pointerdown={beginPointer}
+  on:pointermove={movePointer}
+  on:pointerup={endPointer}
   on:wheel|nonpassive={handleWheel}
   tabindex="0"
 ></canvas>

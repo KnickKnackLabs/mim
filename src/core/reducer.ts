@@ -40,8 +40,8 @@ export function reduceState(state: MimState, command: Command): MimState {
         ? { ...state, helpVisible: false }
         : {
             ...state,
-            lastMotion: [],
-            motionBuffer: [],
+            recordedMotion: [],
+            recordingMotion: [],
             motionEnd: null,
             motionStart: null,
           };
@@ -57,7 +57,7 @@ export function reduceState(state: MimState, command: Command): MimState {
       return {
         ...state,
         cursor,
-        motionBuffer: [],
+        recordingMotion: [],
         motionEnd: null,
         motionStart: { ...cursor },
       };
@@ -67,7 +67,7 @@ export function reduceState(state: MimState, command: Command): MimState {
       if (!state.motionStart || !state.cursor) return state;
       return {
         ...state,
-        lastMotion: [...state.motionBuffer],
+        recordedMotion: [...state.recordingMotion],
         motionEnd: { ...state.cursor },
       };
     }
@@ -129,6 +129,11 @@ export function reduceState(state: MimState, command: Command): MimState {
     case "set-cursor":
       return { ...state, cursor: clampCursor(command, state) };
 
+    case "pan-view":
+      return Number.isFinite(command.dx) && Number.isFinite(command.dy)
+        ? { ...state, viewX: state.viewX + command.dx, viewY: state.viewY + command.dy }
+        : state;
+
     case "move-cursor": {
       const cursor = state.cursor ?? { x: 1, y: 1 };
       return {
@@ -137,20 +142,20 @@ export function reduceState(state: MimState, command: Command): MimState {
           { x: cursor.x + command.dx, y: cursor.y + command.dy },
           state,
         ),
-        lastMotion: state.motionStart && !state.motionEnd
-          ? state.lastMotion
+        recordedMotion: state.motionStart && !state.motionEnd
+          ? state.recordedMotion
           : [{ dx: command.dx, dy: command.dy }],
-        motionBuffer: state.motionStart && !state.motionEnd
-          ? [...state.motionBuffer, { dx: command.dx, dy: command.dy }]
-          : state.motionBuffer,
+        recordingMotion: state.motionStart && !state.motionEnd
+          ? [...state.recordingMotion, { dx: command.dx, dy: command.dy }]
+          : state.recordingMotion,
       };
     }
 
     case "repeat-motion": {
-      if (state.lastMotion.length === 0) return state;
+      if (state.recordedMotion.length === 0) return state;
       const motions = command.reverse
-        ? [...state.lastMotion].reverse().map(({ dx, dy }) => ({ dx: -dx, dy: -dy }))
-        : state.lastMotion;
+        ? [...state.recordedMotion].reverse().map(({ dx, dy }) => ({ dx: -dx, dy: -dy }))
+        : state.recordedMotion;
       let cursor = state.cursor ?? { x: 1, y: 1 };
       for (const motion of motions) {
         cursor = clampCursor(

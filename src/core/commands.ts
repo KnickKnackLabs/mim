@@ -5,6 +5,7 @@ export type Command =
   | { type: "escape" }
   | { type: "finish-motion" }
   | { type: "move-cursor"; dx: number; dy: number }
+  | { type: "pan-view"; dx: number; dy: number }
   | { type: "repeat-motion"; reverse: boolean }
   | { type: "reset-defaults" }
   | { type: "start-motion" }

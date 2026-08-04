@@ -14,8 +14,8 @@ export interface MimState {
   columns: number;
   cursor: Cursor | null;
   helpVisible: boolean;
-  lastMotion: Motion[];
-  motionBuffer: Motion[];
+  recordedMotion: Motion[];
+  recordingMotion: Motion[];
   motionEnd: Cursor | null;
   motionStart: Cursor | null;
   operation: Operation;
@@ -37,8 +37,8 @@ export function createInitialState(): MimState {
     columns: 96,
     cursor: null,
     helpVisible: false,
-    lastMotion: [],
-    motionBuffer: [],
+    recordedMotion: [],
+    recordingMotion: [],
     motionEnd: null,
     motionStart: null,
     operation: "lcm",

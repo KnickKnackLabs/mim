@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 
-import { commandForKey } from "./keyboard";
+import { commandForKey, createKeySequenceState, interpretKey } from "./keyboard";
 
 test("keyboard input maps to semantic commands", () => {
   expect(commandForKey("h")).toEqual({ type: "move-cursor", dx: -1, dy: 0 });
@@ -9,4 +9,15 @@ test("keyboard input maps to semantic commands", () => {
   expect(commandForKey("Escape")).toEqual({ type: "escape" });
   expect(commandForKey("g")).toEqual({ type: "set-operation", operation: "gcd" });
   expect(commandForKey("m")).toEqual({ type: "set-operation", operation: "lcm" });
+});
+
+test("numeric prefixes produce one counted movement command", () => {
+  let result = interpretKey(createKeySequenceState(), "1");
+  result = interpretKey(result.state, "0");
+  result = interpretKey(result.state, "l");
+  expect(result.command).toEqual({ type: "move-cursor", dx: 10, dy: 0 });
+  expect(result.state).toEqual(createKeySequenceState());
+
+  expect(commandForKey(" ", 1, false)).toEqual({ type: "repeat-motion", reverse: false });
+  expect(commandForKey(" ", 1, true)).toEqual({ type: "repeat-motion", reverse: true });
 });

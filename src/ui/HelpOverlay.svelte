@@ -46,7 +46,8 @@
       <div><dt><kbd>+ −</kbd></dt><dd>zoom in and out</dd></div>
       <div><dt><kbd>wheel</kbd></dt><dd>zoom toward the pointer</dd></div>
       <div><dt><kbd>p</kbd></dt><dd>toggle prime results</dd></div>
-      <div><dt>pointer</dt><dd>select a cell</dd></div>
+      <div><dt>click</dt><dd>select a cell</dd></div>
+      <div><dt>drag</dt><dd>pan the view</dd></div>
       <div><dt>X / Y</dt><dd>set the lattice bounds</dd></div>
       <div><dt>Reset</dt><dd>restore the instrument defaults</dd></div>
     </dl>
