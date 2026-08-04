@@ -4,8 +4,10 @@ import {
   createInitialState,
   MAX_ZOOM_DENOMINATOR,
   MIN_ZOOM_DENOMINATOR,
+  PERFORMANCE_WINDOWS,
   type Cursor,
   type MimState,
+  type PerformanceWindowSeconds,
 } from "./state";
 
 function clamp(value: number, minimum: number, maximum: number): number {
@@ -22,6 +24,19 @@ function normalizeZoomDenominator(value: number): number {
 
 function stepZoom(current: number, direction: "in" | "out"): number {
   return normalizeZoomDenominator(current + (direction === "in" ? -1 : 1));
+}
+
+function stepPerformanceWindow(
+  current: PerformanceWindowSeconds,
+  direction: "shorter" | "longer",
+): PerformanceWindowSeconds {
+  const currentIndex = PERFORMANCE_WINDOWS.indexOf(current);
+  const nextIndex = clamp(
+    currentIndex + (direction === "shorter" ? -1 : 1),
+    0,
+    PERFORMANCE_WINDOWS.length - 1,
+  );
+  return PERFORMANCE_WINDOWS[nextIndex];
 }
 
 function normalizeAxisIndex(index: number, kind: AxisKind): number {
@@ -62,6 +77,19 @@ export function reduceState(state: MimState, command: Command): MimState {
 
     case "toggle-help":
       return { ...state, helpVisible: !state.helpVisible };
+
+    case "toggle-performance":
+      return { ...state, performanceVisible: !state.performanceVisible };
+
+    case "step-performance-window": {
+      const performanceWindowSeconds = stepPerformanceWindow(
+        state.performanceWindowSeconds,
+        command.direction,
+      );
+      return performanceWindowSeconds === state.performanceWindowSeconds
+        ? state
+        : { ...state, performanceWindowSeconds };
+    }
 
     case "toggle-pin-cursor":
       return { ...state, pinCursor: !state.pinCursor };

@@ -204,6 +204,64 @@ kbd {
   background: rgba(19, 57, 78, 0.72);
 }
 
+.performance-overlay {
+  position: absolute;
+  z-index: 2;
+  bottom: 2.15rem;
+  left: 1.25rem;
+  display: grid;
+  width: min(34rem, calc(100% - 2.5rem));
+  gap: 0.35rem;
+  padding: 0.55rem 0.65rem;
+  color: #9cc7dc;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.68rem;
+  pointer-events: none;
+  border: 1px solid rgba(186, 230, 253, 0.18);
+  border-radius: 0.45rem;
+  background: rgba(7, 24, 39, 0.76);
+  backdrop-filter: blur(8px);
+}
+
+.performance-overlay header,
+.performance-latest,
+.performance-summary,
+.performance-context {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+}
+
+.performance-overlay header {
+  align-items: baseline;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid rgba(186, 230, 253, 0.12);
+}
+
+.performance-overlay header strong,
+.performance-latest strong {
+  color: #dff4ff;
+}
+
+.performance-overlay header span:last-child {
+  margin-left: auto;
+  color: #7dd3fc;
+}
+
+.performance-overlay header span.idle,
+.performance-empty {
+  color: #7899aa;
+}
+
+.performance-summary,
+.performance-context {
+  color: #80afc5;
+}
+
+.performance-context {
+  font-size: 0.62rem;
+}
+
 .camera-readout,
 .readout {
   position: absolute;

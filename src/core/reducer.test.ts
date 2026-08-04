@@ -26,6 +26,34 @@ describe("reduceState", () => {
     expect(reduceState(initial, { type: "toggle-pin-cursor" }).pinCursor).toBe(true);
   });
 
+  test("toggles performance metrics and steps bounded sample windows", () => {
+    const initial = createInitialState();
+    expect(initial.performanceVisible).toBe(true);
+    expect(initial.performanceWindowSeconds).toBe(3);
+    expect(reduceState(initial, { type: "toggle-performance" }).performanceVisible).toBe(false);
+
+    let state = reduceState(initial, {
+      type: "step-performance-window",
+      direction: "shorter",
+    });
+    expect(state.performanceWindowSeconds).toBe(2);
+    state = reduceState(state, { type: "step-performance-window", direction: "shorter" });
+    expect(state.performanceWindowSeconds).toBe(1);
+    expect(reduceState(state, {
+      type: "step-performance-window",
+      direction: "shorter",
+    })).toBe(state);
+
+    for (let step = 0; step < 10; step += 1) {
+      state = reduceState(state, { type: "step-performance-window", direction: "longer" });
+    }
+    expect(state.performanceWindowSeconds).toBe(30);
+    expect(reduceState(state, {
+      type: "step-performance-window",
+      direction: "longer",
+    })).toBe(state);
+  });
+
   test("moves the cursor across signed integer coordinates", () => {
     let state = reduceState(createInitialState(), { type: "move-cursor", dx: -2, dy: 4 });
     expect(state.cursor).toEqual({ x: -2, y: 4 });
