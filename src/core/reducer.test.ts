@@ -26,11 +26,11 @@ describe("reduceState", () => {
     expect(reduceState(initial, { type: "toggle-pin-cursor" }).pinCursor).toBe(true);
   });
 
-  test("moves and clamps the cursor", () => {
+  test("moves the cursor across signed integer coordinates", () => {
     let state = reduceState(createInitialState(), { type: "move-cursor", dx: -2, dy: 4 });
-    expect(state.cursor).toEqual({ x: 1, y: 5 });
+    expect(state.cursor).toEqual({ x: -2, y: 4 });
     state = reduceState(state, { type: "move-cursor", dx: 500, dy: 500 });
-    expect(state.cursor).toEqual({ x: 501, y: 505 });
+    expect(state.cursor).toEqual({ x: 498, y: 504 });
   });
 
   test("records, replays, and retraces a movement sequence", () => {
@@ -78,10 +78,10 @@ describe("reduceState", () => {
     expect(reduceState(state, { type: "reset-defaults" })).toEqual(createInitialState());
   });
 
-  test("keeps cursor coordinates in the positive integer lattice", () => {
-    let state = reduceState(createInitialState(), { type: "set-cursor", x: -4, y: 0 });
-    expect(state.cursor).toEqual({ x: 1, y: 1 });
+  test("normalizes selected coordinates to integers without changing their sign", () => {
+    let state = reduceState(createInitialState(), { type: "set-cursor", x: -4.4, y: 0.4 });
+    expect(state.cursor).toEqual({ x: -4, y: 0 });
     state = reduceState(state, { type: "move-cursor", dx: -3, dy: -2 });
-    expect(state.cursor).toEqual({ x: 1, y: 1 });
+    expect(state.cursor).toEqual({ x: -7, y: -2 });
   });
 });

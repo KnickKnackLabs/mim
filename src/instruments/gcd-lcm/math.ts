@@ -1,17 +1,17 @@
 import type { Operation } from "../../core/state";
 
-function requirePositiveSafeInteger(value: number): void {
-  if (!Number.isSafeInteger(value) || value < 1) {
-    throw new RangeError(`expected a positive safe integer, got ${value}`);
+function requireSafeInteger(value: number): void {
+  if (!Number.isSafeInteger(value)) {
+    throw new RangeError(`expected a safe integer, got ${value}`);
   }
 }
 
 export function gcd(left: number, right: number): number {
-  requirePositiveSafeInteger(left);
-  requirePositiveSafeInteger(right);
+  requireSafeInteger(left);
+  requireSafeInteger(right);
 
-  let a = left;
-  let b = right;
+  let a = Math.abs(left);
+  let b = Math.abs(right);
   while (b !== 0) {
     [a, b] = [b, a % b];
   }
@@ -19,7 +19,10 @@ export function gcd(left: number, right: number): number {
 }
 
 export function lcm(left: number, right: number): number {
-  const value = (left / gcd(left, right)) * right;
+  requireSafeInteger(left);
+  requireSafeInteger(right);
+  if (left === 0 || right === 0) return 0;
+  const value = (Math.abs(left) / gcd(left, right)) * Math.abs(right);
   if (!Number.isSafeInteger(value)) {
     throw new RangeError(`LCM exceeds safe integer range: ${left}, ${right}`);
   }

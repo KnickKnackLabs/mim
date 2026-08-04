@@ -6,10 +6,6 @@ export interface PointerBounds {
   top: number;
 }
 
-function clampToPositive(value: number): number {
-  return Math.max(1, value);
-}
-
 export function cellForPoint(
   clientX: number,
   clientY: number,
@@ -20,8 +16,5 @@ export function cellForPoint(
   const localY = clientY - bounds.top - layout.top;
   const x = Math.floor(localX / layout.cellSize) + 1;
   const y = Math.floor(localY / layout.cellSize) + 1;
-  return {
-    x: clampToPositive(x),
-    y: clampToPositive(y),
-  };
+  return { x, y };
 }

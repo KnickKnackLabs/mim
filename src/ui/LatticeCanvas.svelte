@@ -39,11 +39,14 @@
   let pendingWheelX = 0;
   let pendingWheelY = 0;
   let panning = false;
+  let pointerHidden = false;
+  let pointerIdleTimer: number | null = null;
   let pixelRatio = 1;
   let wheelFrame: number | null = null;
 
   const HELD_MOVEMENT_DELAY_MS = 180;
   const HELD_MOVEMENT_INTERVAL_MS = 55;
+  const POINTER_IDLE_MS = 1000;
 
   $: visibleExtent = visibleGridExtent(
     cssWidth,
@@ -68,6 +71,7 @@
     return () => {
       observer.disconnect();
       clearHeldMovement();
+      clearPointerIdleTimer();
       if (wheelFrame !== null) cancelAnimationFrame(wheelFrame);
     };
   });
@@ -102,6 +106,26 @@
     clearHeldMovement();
   }
 
+  function clearPointerIdleTimer(): void {
+    if (pointerIdleTimer !== null) window.clearTimeout(pointerIdleTimer);
+    pointerIdleTimer = null;
+  }
+
+  function showPointer(scheduleHide = true): void {
+    pointerHidden = false;
+    clearPointerIdleTimer();
+    if (!scheduleHide) return;
+    pointerIdleTimer = window.setTimeout(() => {
+      pointerIdleTimer = null;
+      pointerHidden = true;
+    }, POINTER_IDLE_MS);
+  }
+
+  function hidePointer(): void {
+    clearPointerIdleTimer();
+    pointerHidden = true;
+  }
+
   function handleKeydown(event: KeyboardEvent): void {
     if (event.metaKey || event.ctrlKey || event.altKey) return;
     if (movementForKey(event.key)) {
@@ -114,7 +138,12 @@
     keySequence = result.state;
     if (!result.handled) return;
     event.preventDefault();
-    if (result.command) dispatch(result.command);
+    if (result.command) {
+      dispatch(result.command);
+      if (result.command.type === "move-cursor" || result.command.type === "repeat-motion") {
+        hidePointer();
+      }
+    }
   }
 
   function handleKeyup(event: KeyboardEvent): void {
@@ -141,6 +170,7 @@
 
   function beginPointer(event: PointerEvent): void {
     if (event.button !== 0) return;
+    showPointer(false);
     event.preventDefault();
     handlePointer(event);
     canvas.focus();
@@ -152,6 +182,7 @@
   }
 
   function movePointer(event: PointerEvent): void {
+    showPointer(dragPointerId === null);
     if (event.pointerId !== dragPointerId) {
       handlePointer(event);
       return;
@@ -176,6 +207,7 @@
     if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
     dragPointerId = null;
     panning = false;
+    showPointer();
   }
 
   function applyWheelZoom(): void {
@@ -191,14 +223,15 @@
     pendingWheelDelta = 0;
     dispatch({
       type: "zoom-at",
-      anchorX: pendingWheelX / cellSize,
-      anchorY: pendingWheelY / cellSize,
+      anchorX: (pendingWheelX - bounds.width / 2) / cellSize,
+      anchorY: (pendingWheelY - bounds.height / 2) / cellSize,
       denominator,
     });
   }
 
   function handleWheel(event: WheelEvent): void {
     event.preventDefault();
+    showPointer();
     const bounds = canvas.getBoundingClientRect();
     const normalizedDelta = event.deltaMode === 1
       ? event.deltaY * 16
@@ -218,11 +251,13 @@
   bind:this={canvas}
   aria-label="Interactive GCD and LCM lattice"
   class:panning
+  class:pointer-hidden={pointerHidden}
   on:blur={handleBlur}
   on:keydown={handleKeydown}
   on:keyup={handleKeyup}
   on:pointercancel={endPointer}
   on:pointerdown={beginPointer}
+  on:pointerleave={() => showPointer(false)}
   on:pointermove={movePointer}
   on:pointerup={endPointer}
   on:wheel|nonpassive={handleWheel}

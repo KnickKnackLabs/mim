@@ -23,10 +23,10 @@ function stepZoom(current: number, direction: "in" | "out"): number {
   return normalizeZoomDenominator(current + (direction === "in" ? -1 : 1));
 }
 
-function clampCursor(cursor: Cursor): Cursor {
+function normalizeCursor(cursor: Cursor): Cursor {
   return {
-    x: Math.max(1, Math.round(cursor.x)),
-    y: Math.max(1, Math.round(cursor.y)),
+    x: Math.round(cursor.x),
+    y: Math.round(cursor.y),
   };
 }
 
@@ -56,7 +56,7 @@ export function reduceState(state: MimState, command: Command): MimState {
       return { ...state, pinCursor: !state.pinCursor };
 
     case "start-motion": {
-      const cursor = state.cursor ?? { x: 1, y: 1 };
+      const cursor = state.cursor ?? { x: 0, y: 0 };
       return {
         ...state,
         cursor,
@@ -121,7 +121,7 @@ export function reduceState(state: MimState, command: Command): MimState {
     }
 
     case "set-cursor":
-      return { ...state, cursor: clampCursor(command) };
+      return { ...state, cursor: normalizeCursor(command) };
 
     case "pan-view":
       return Number.isFinite(command.dx) && Number.isFinite(command.dy)
@@ -129,10 +129,10 @@ export function reduceState(state: MimState, command: Command): MimState {
         : state;
 
     case "move-cursor": {
-      const cursor = state.cursor ?? { x: 1, y: 1 };
+      const cursor = state.cursor ?? { x: 0, y: 0 };
       return {
         ...state,
-        cursor: clampCursor(
+        cursor: normalizeCursor(
           { x: cursor.x + command.dx, y: cursor.y + command.dy },
         ),
         recordedMotion: state.motionStart && !state.motionEnd
@@ -149,9 +149,9 @@ export function reduceState(state: MimState, command: Command): MimState {
       const motions = command.reverse
         ? [...state.recordedMotion].reverse().map(({ dx, dy }) => ({ dx: -dx, dy: -dy }))
         : state.recordedMotion;
-      let cursor = state.cursor ?? { x: 1, y: 1 };
+      let cursor = state.cursor ?? { x: 0, y: 0 };
       for (const motion of motions) {
-        cursor = clampCursor(
+        cursor = normalizeCursor(
           { x: cursor.x + motion.dx, y: cursor.y + motion.dy },
         );
       }

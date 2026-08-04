@@ -23,10 +23,12 @@ export function visibleGridExtent(
   viewY = 0,
 ): VisibleGridExtent {
   const cellSize = Math.min(width, height) / zoomDenominator;
-  const minX = Math.max(1, Math.floor(viewX) + 1);
-  const minY = Math.max(1, Math.floor(viewY) + 1);
-  const maxX = Math.ceil(viewX + width / cellSize);
-  const maxY = Math.ceil(viewY + height / cellSize);
+  const halfColumns = width / cellSize / 2;
+  const halfRows = height / cellSize / 2;
+  const minX = Math.floor(viewX - halfColumns - 0.5) + 1;
+  const minY = Math.floor(viewY - halfRows - 0.5) + 1;
+  const maxX = Math.ceil(viewX + halfColumns + 0.5) - 1;
+  const maxY = Math.ceil(viewY + halfRows + 0.5) - 1;
   return {
     columns: Math.max(0, maxX - minX + 1),
     maxX,
@@ -54,9 +56,9 @@ export function squareGridAtScale(
   return {
     cellSize,
     columns,
-    left: -viewX * cellSize,
+    left: width / 2 + (0.5 - viewX) * cellSize,
     rows,
-    top: -viewY * cellSize,
+    top: height / 2 + (0.5 - viewY) * cellSize,
   };
 }
 

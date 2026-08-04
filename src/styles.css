@@ -49,6 +49,10 @@ canvas.panning {
   cursor: grabbing;
 }
 
+canvas.pointer-hidden {
+  cursor: none;
+}
+
 canvas:focus-visible {
   box-shadow: inset 0 0 0 1px rgba(125, 211, 252, 0.75);
 }
