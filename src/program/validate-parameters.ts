@@ -45,6 +45,7 @@ export function validateParameters(
       });
       continue;
     }
+    names[statement.name] = { kind: "parameter", name: statement.name, valueType: "number" };
     if (statement.initial.kind !== "number" || !isPrimeInteger(statement.initial.value)) {
       diagnostics.push({
         code: "invalid-parameter",
@@ -54,7 +55,6 @@ export function validateParameters(
       continue;
     }
 
-    names[statement.name] = { kind: "parameter", name: statement.name, valueType: "number" };
     parameters.push({
       initialValue: statement.initial.value,
       kind: "prime",

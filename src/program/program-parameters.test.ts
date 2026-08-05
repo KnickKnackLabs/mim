@@ -24,9 +24,9 @@ describe("program parameter validation", () => {
     expect(codes(source)).toContain("unknown-parameter-type");
   });
 
-  test("rejects composite prime initial values", () => {
+  test("rejects composite prime initial values without unknown-name cascades", () => {
     const source = replaceLine(PROVING_PROGRAM, ":param", ":param p prime = 21");
-    expect(codes(source)).toContain("invalid-parameter");
+    expect(codes(source)).toEqual(["invalid-parameter"]);
   });
 
   test("rejects expression-valued prime initial values", () => {

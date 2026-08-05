@@ -1,6 +1,12 @@
 <script lang="ts">
+  import type {
+    BrowserProgram,
+    BrowserProgramDiagnostic,
+  } from "./browser/browser-program";
+  import { formatBrowserProgram } from "./browser/format-browser-program";
+  import { loadBrowserProgram } from "./browser/load-browser-program";
+  import { updateBrowserProgram } from "./browser/update-browser-program";
   import {
-    compilePreparedDemo,
     preparedDemoEnabled,
     PREPARED_DEMO_SOURCE,
   } from "./browser/prepared-demo";
@@ -16,10 +22,16 @@
   import HelpOverlay from "./ui/HelpOverlay.svelte";
   import LatticeCanvas from "./ui/LatticeCanvas.svelte";
   import PerformanceOverlay from "./ui/PerformanceOverlay.svelte";
+  import ProgramEditor from "./ui/ProgramEditor.svelte";
 
   const preparedDemo = preparedDemoEnabled(window.location.hash);
-  const preparedProgram = preparedDemo ? compilePreparedDemo() : null;
+  const initialProgram = preparedDemo ? loadBrowserProgram(PREPARED_DEMO_SOURCE) : null;
+  if (initialProgram && !initialProgram.ok) {
+    throw new Error(initialProgram.diagnostics.map(({ message }) => message).join("\n"));
+  }
+  let browserProgram: BrowserProgram | null = initialProgram?.loaded ?? null;
   let preparedFrame: PreparedFrame | null = null;
+  let programEditor: ProgramEditor;
   let state = createInitialState();
   let visibleExtent: VisibleGridExtent = visibleGridExtent(1, 1, 1);
 
@@ -61,6 +73,15 @@
     return `${result.kind}: ${result.message}`;
   }
 
+  function applyPreparedSource(source: string): readonly BrowserProgramDiagnostic[] {
+    if (!browserProgram) return [];
+    const update = updateBrowserProgram(browserProgram, source);
+    browserProgram = update.active;
+    return update.diagnostics;
+  }
+
+  $: preparedProgram = browserProgram?.program ?? null;
+
   function handleGlobalHelpKeydown(event: KeyboardEvent): void {
     if (event.defaultPrevented || (event.key !== "?" && event.key !== "Escape")) return;
     const command = commandForKey(event.key);
@@ -89,10 +110,13 @@
 <main>
   {#if preparedDemo}
     <aside class="prepared-demo" aria-label="Prepared frame demo">
-      <strong>prepared frame demo</strong>
+      <div class="prepared-demo-heading">
+        <strong>prepared frame demo</strong>
+        <button type="button" on:click={() => programEditor.open()}>Edit program</button>
+      </div>
       <span>LCM → strip prime 31 → exact color</span>
-      <code>{PREPARED_DEMO_SOURCE.trim().replaceAll("\n", " · ")}</code>
-      <span>append <code>#legacy</code> to the URL for the merged renderer</span>
+      <code>{browserProgram?.source.trim().replaceAll("\n", " · ")}</code>
+      <span>press <kbd>:</kbd> to edit · append <code>#legacy</code> for the merged renderer</span>
     </aside>
   {:else}
     <Controls {state} {dispatch} />
@@ -112,6 +136,15 @@
     visible={state.performanceVisible}
     windowSeconds={state.performanceWindowSeconds}
   />
+
+  {#if preparedDemo && browserProgram}
+    <ProgramEditor
+      apply={applyPreparedSource}
+      bind:this={programEditor}
+      format={formatBrowserProgram}
+      source={browserProgram.source}
+    />
+  {/if}
 
   <aside class="camera-readout" aria-label="Camera status">
     <span>zoom <strong>1/{state.zoomDenominator}</strong></span>
