@@ -1,28 +1,29 @@
 import type { ValidatedProgram } from "../program";
 import { bindParameters } from "./bind-parameters";
 import { evaluateExpression } from "./evaluate-expression";
-import type { CellEvaluation, CellInputs, EvaluationContext } from "./types";
+import type {
+  CellEvaluation,
+  CellInputs,
+  EvaluatedCell,
+  EvaluationContext,
+} from "./types";
 
-export function evaluateCell(
+export function evaluateBoundCell(
   program: ValidatedProgram,
   inputs: CellInputs,
-  overrides: Readonly<Record<string, number>> = {},
-): CellEvaluation {
-  const binding = bindParameters(program, overrides);
-  if (binding.kind === "invalid") {
-    return { cell: null, diagnostics: binding.diagnostics, kind: "invalid-parameters" };
-  }
-
+  parameters: Readonly<Record<string, number>>,
+): EvaluatedCell {
   const baseContext: EvaluationContext = {
     inputs: { x: inputs.x, xi: inputs.xi, y: inputs.y, yi: inputs.yi },
-    parameters: binding.values,
+    parameters,
   };
   const field = evaluateExpression(program.field, baseContext);
   if (field.kind !== "number") {
     return {
-      cell: { color: null, field, lens: null, parameters: binding.values },
-      diagnostics: [],
-      kind: "evaluated",
+      color: null,
+      field,
+      lens: null,
+      parameters,
     };
   }
 
@@ -32,9 +33,10 @@ export function evaluateCell(
   });
   if (lens.kind !== "number") {
     return {
-      cell: { color: null, field, lens, parameters: binding.values },
-      diagnostics: [],
-      kind: "evaluated",
+      color: null,
+      field,
+      lens,
+      parameters,
     };
   }
 
@@ -46,8 +48,20 @@ export function evaluateCell(
       value: field.value,
     },
   });
+  return { color, field, lens, parameters };
+}
+
+export function evaluateCell(
+  program: ValidatedProgram,
+  inputs: CellInputs,
+  overrides: Readonly<Record<string, number>> = {},
+): CellEvaluation {
+  const binding = bindParameters(program, overrides);
+  if (binding.kind === "invalid") {
+    return { cell: null, diagnostics: binding.diagnostics, kind: "invalid-parameters" };
+  }
   return {
-    cell: { color, field, lens, parameters: binding.values },
+    cell: evaluateBoundCell(program, inputs, binding.values),
     diagnostics: [],
     kind: "evaluated",
   };
