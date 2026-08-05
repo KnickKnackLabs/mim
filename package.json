@@ -9,7 +9,7 @@
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "check:artifact": "bun run scripts/check-artifact.ts",
     "test": "bun run scripts/test.ts",
-    "test:unit": "bun test src"
+    "test:unit": "bun test src scripts"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^7.2.0",

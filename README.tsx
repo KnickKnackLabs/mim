@@ -82,6 +82,9 @@ mise install
 bun install --frozen-lockfile
 mise run mim:dev
 
+# Watch one program in a persistent browser.
+mise run mim:watch experiment.mim --open
+
 # Build and open the portable artifact.
 mise run mim`}</CodeBlock>
     </Section>
@@ -94,7 +97,8 @@ mise run mim`}</CodeBlock>
         <TableRow><Cell><Code>src/input</Code></Cell><Cell>Keyboard and pointer input translated into commands</Cell></TableRow>
         <TableRow><Cell><Code>src/render</Code></Cell><Cell>Canvas pixels from prepared display data</Cell></TableRow>
         <TableRow><Cell><Code>src/ui</Code></Cell><Cell>Svelte controls and Canvas host</Cell></TableRow>
-        <TableRow><Cell><Code>scripts</Code></Cell><Cell>Standalone build and aggregate validation</Cell></TableRow>
+        <TableRow><Cell><Code>src/watch</Code></Cell><Cell>File observation and loopback update transport</Cell></TableRow>
+        <TableRow><Cell><Code>scripts</Code></Cell><Cell>CLI lifecycle, standalone build, and aggregate validation</Cell></TableRow>
       </Table>
     </Section>
 

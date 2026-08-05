@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { onMount } from "svelte";
+
   import type {
     BrowserProgram,
     BrowserProgramDiagnostic,
@@ -6,6 +8,15 @@
   import { formatBrowserProgram } from "./browser/format-browser-program";
   import { loadBrowserProgram } from "./browser/load-browser-program";
   import { updateBrowserProgram } from "./browser/update-browser-program";
+  import {
+    connectWatchClient,
+    watchEndpoint,
+    type WatchConnectionStatus,
+  } from "./browser/watch-client";
+  import {
+    applyBrowserWatchUpdate,
+    createBrowserWatchState,
+  } from "./browser/watch-mode";
   import {
     preparedDemoEnabled,
     PREPARED_DEMO_SOURCE,
@@ -24,14 +35,19 @@
   import PerformanceOverlay from "./ui/PerformanceOverlay.svelte";
   import ProgramEditor from "./ui/ProgramEditor.svelte";
 
-  const preparedDemo = preparedDemoEnabled(window.location.hash);
+  const watchedEndpoint = watchEndpoint(window.location.href);
+  const watchMode = watchedEndpoint !== null;
+  const preparedDemo = !watchMode && preparedDemoEnabled(window.location.hash);
+  const programMode = preparedDemo || watchMode;
   const initialProgram = preparedDemo ? loadBrowserProgram(PREPARED_DEMO_SOURCE) : null;
   if (initialProgram && !initialProgram.ok) {
     throw new Error(initialProgram.diagnostics.map(({ message }) => message).join("\n"));
   }
   let browserProgram: BrowserProgram | null = initialProgram?.loaded ?? null;
+  let browserWatch = createBrowserWatchState();
   let preparedFrame: PreparedFrame | null = null;
   let programEditor: ProgramEditor;
+  let watchStatus: WatchConnectionStatus = "connecting";
   let state = createInitialState();
   let visibleExtent: VisibleGridExtent = visibleGridExtent(1, 1, 1);
 
@@ -80,6 +96,17 @@
     return update.diagnostics;
   }
 
+  onMount(() => {
+    if (!watchedEndpoint) return;
+    return connectWatchClient(watchedEndpoint, {
+      onStatus: (status) => watchStatus = status,
+      onUpdate: (update) => {
+        browserWatch = applyBrowserWatchUpdate(browserWatch, update);
+        browserProgram = browserWatch.active;
+      },
+    });
+  });
+
   $: preparedProgram = browserProgram?.program ?? null;
 
   function handleGlobalHelpKeydown(event: KeyboardEvent): void {
@@ -108,15 +135,42 @@
 <svelte:window on:keydown={handleGlobalHelpKeydown} />
 
 <main>
-  {#if preparedDemo}
-    <aside class="prepared-demo" aria-label="Prepared frame demo">
+  {#if programMode}
+    <aside class="prepared-demo" aria-label={watchMode ? "Watched mim program" : "Prepared frame demo"}>
       <div class="prepared-demo-heading">
-        <strong>prepared frame demo</strong>
-        <button type="button" on:click={() => programEditor.open()}>Edit program</button>
+        <strong>{watchMode ? "watched mim program" : "prepared frame demo"}</strong>
+        <button
+          disabled={watchMode && browserWatch.revision === 0}
+          type="button"
+          on:click={() => programEditor.open()}
+        >{watchMode ? "View program" : "Edit program"}</button>
       </div>
-      <span>LCM → strip prime 31 → exact color</span>
-      <code>{browserProgram?.source.trim().replaceAll("\n", " · ")}</code>
-      <span>press <kbd>:</kbd> to edit · append <code>#legacy</code> for the merged renderer</span>
+      {#if watchMode}
+        <span
+          class:watch-error={watchStatus === "disconnected"}
+          role="status"
+        >{watchStatus} · revision {browserWatch.revision}</span>
+        <code>{browserWatch.source.trim().replaceAll("\n", " · ") || "waiting for source"}</code>
+        {#if browserWatch.revision === 0}
+          <span>waiting for the watched file</span>
+        {:else if browserWatch.accepted}
+          <span>
+            valid · {watchStatus === "connected" ? "live" : "showing last received picture"}
+            · press <kbd>:</kbd> to view
+          </span>
+        {:else}
+          <span class="watch-error" role="alert">invalid file · showing last valid picture</span>
+          {#each browserWatch.diagnostics as diagnostic}
+            <span class="watch-error">
+              {diagnostic.span.start.line}:{diagnostic.span.start.column} {diagnostic.message}
+            </span>
+          {/each}
+        {/if}
+      {:else}
+        <span>LCM → strip prime 31 → exact color</span>
+        <code>{browserProgram?.source.trim().replaceAll("\n", " · ")}</code>
+        <span>press <kbd>:</kbd> to edit · append <code>#legacy</code> for the merged renderer</span>
+      {/if}
     </aside>
   {:else}
     <Controls {state} {dispatch} />
@@ -137,12 +191,15 @@
     windowSeconds={state.performanceWindowSeconds}
   />
 
-  {#if preparedDemo && browserProgram}
+  {#if programMode && (browserProgram || (watchMode && browserWatch.revision > 0))}
     <ProgramEditor
       apply={applyPreparedSource}
       bind:this={programEditor}
       format={formatBrowserProgram}
-      source={browserProgram.source}
+      readOnly={watchMode}
+      reportedDiagnostics={watchMode ? browserWatch.diagnostics : []}
+      source={watchMode ? browserWatch.source : browserProgram?.source ?? ""}
+      watchConnected={watchStatus === "connected"}
     />
   {/if}
 
@@ -158,11 +215,11 @@
     {:else if recordedMotion}
       <span>{recordedMotion.steps} motions · Δ({recordedMotion.dx}, {recordedMotion.dy})</span>
     {/if}
-    {#if preparedDemo && preparedCell}
+    {#if programMode && preparedCell}
       <strong>({preparedCell.x}, {preparedCell.y})</strong>
       <span>field {evaluationText(preparedCell.evaluation.field)}</span>
       <span>lens {evaluationText(preparedCell.evaluation.lens)}</span>
-    {:else if !preparedDemo && state.cursor && selectedX !== null && selectedY !== null && selectedValue !== null}
+    {:else if !programMode && state.cursor && selectedX !== null && selectedY !== null && selectedValue !== null}
       <strong>{state.operation}({selectedX}, {selectedY})</strong>
       <span>= {selectedValue}</span>
     {:else}

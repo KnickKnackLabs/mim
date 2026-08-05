@@ -7,7 +7,7 @@ interface Step {
 
 const repoRoot = resolve(import.meta.dir, "..");
 const steps: Step[] = [
-  { name: "unit", command: [process.execPath, "test", "src"] },
+  { name: "unit", command: [process.execPath, "test", "src", "scripts"] },
   { name: "svelte", command: [process.execPath, "run", "check"] },
   { name: "standalone build", command: [process.execPath, "run", "build"] },
   { name: "BATS", command: ["mise", "run", "bats"] },

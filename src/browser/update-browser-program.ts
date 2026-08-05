@@ -4,8 +4,8 @@ import type {
 } from "./browser-program";
 import { loadBrowserProgram } from "./load-browser-program";
 
-export interface BrowserProgramUpdate {
-  active: BrowserProgram;
+export interface BrowserProgramUpdate<Active extends BrowserProgram | null> {
+  active: Active;
   accepted: boolean;
   diagnostics: readonly BrowserProgramDiagnostic[];
 }
@@ -13,7 +13,15 @@ export interface BrowserProgramUpdate {
 export function updateBrowserProgram(
   active: BrowserProgram,
   source: string,
-): BrowserProgramUpdate {
+): BrowserProgramUpdate<BrowserProgram>;
+export function updateBrowserProgram(
+  active: BrowserProgram | null,
+  source: string,
+): BrowserProgramUpdate<BrowserProgram | null>;
+export function updateBrowserProgram(
+  active: BrowserProgram | null,
+  source: string,
+): BrowserProgramUpdate<BrowserProgram | null> {
   const result = loadBrowserProgram(source);
   return result.ok
     ? { accepted: true, active: result.loaded, diagnostics: [] }
