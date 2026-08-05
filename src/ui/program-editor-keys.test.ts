@@ -33,6 +33,10 @@ describe("program editor keyboard actions", () => {
     })).toBe("close");
   });
 
+  test("closes a focused editor input with Escape", () => {
+    expect(programEditorInputAction("Escape", false, false)).toBe("close");
+  });
+
   test("applies with platform command Enter", () => {
     expect(programEditorInputAction("Enter", true, false)).toBe("apply");
     expect(programEditorInputAction("Enter", false, true)).toBe("apply");

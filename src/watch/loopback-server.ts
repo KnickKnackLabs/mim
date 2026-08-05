@@ -14,6 +14,7 @@ export interface LoopbackWatchServer {
 
 export interface LoopbackWatchServerOptions {
   html: string;
+  idleTimeoutSeconds?: number;
   port?: number;
 }
 
@@ -37,10 +38,12 @@ export function startLoopbackWatchServer(
 
   const server = Bun.serve({
     hostname: LOOPBACK_HOST,
+    idleTimeout: options.idleTimeoutSeconds,
     port: options.port ?? 0,
-    fetch(request): Response {
+    fetch(request, server): Response {
       const url = new URL(request.url);
       if (url.pathname === WATCH_EVENT_PATH) {
+        server.timeout(request, 0);
         let active: ReadableStreamDefaultController<Uint8Array> | null = null;
         const body = new ReadableStream<Uint8Array>({
           cancel(): void {

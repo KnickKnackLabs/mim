@@ -99,9 +99,12 @@
   }
 
   function handleEditorKeydown(event: KeyboardEvent): void {
-    if (programEditorInputAction(event.key, event.metaKey, event.ctrlKey) !== "apply") return;
+    const action = programEditorInputAction(event.key, event.metaKey, event.ctrlKey);
+    if (!action) return;
     event.preventDefault();
-    applyDraft();
+    event.stopPropagation();
+    if (action === "close") close();
+    else applyDraft();
   }
 </script>
 
