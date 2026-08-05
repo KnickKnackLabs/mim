@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
 
+  import { createFrameDraw } from "../browser/create-frame-draw";
   import { axisValueAt } from "../core/axis";
   import type { Dispatch } from "../core/commands";
   import type { MimState } from "../core/state";
@@ -12,9 +13,9 @@
   } from "../input/keyboard";
   import { cellForPoint } from "../input/pointer";
   import { wheelZoomDenominator } from "../input/wheelZoom";
-  import { buildFrame } from "../instruments/gcd-lcm/frame";
   import { recordRender } from "../performance/metrics";
-  import { renderFrame } from "../render/canvas/render";
+  import type { ValidatedProgram } from "../program";
+  import type { PreparedFrame } from "../runtime";
   import {
     squareGridAtScale,
     visibleGridExtent,
@@ -23,6 +24,8 @@
 
   export let state: MimState;
   export let dispatch: Dispatch;
+  export let program: ValidatedProgram | null = null;
+  export let preparedFrame: PreparedFrame | null = null;
   export let visibleExtent: VisibleGridExtent = visibleGridExtent(1, 1, 1);
 
   let canvas: HTMLCanvasElement;
@@ -59,26 +62,27 @@
   );
   $: if (canvas && cssWidth > 1 && cssHeight > 1) {
     const prepareStarted = performance.now();
-    const frame = buildFrame(state, visibleExtent);
+    const draw = createFrameDraw(state, visibleExtent, program);
+    preparedFrame = draw.preparedFrame;
     const prepareEnded = performance.now();
     try {
-      renderFrame(canvas, frame, { cssHeight, cssWidth, pixelRatio });
+      draw.paint(canvas, { cssHeight, cssWidth, pixelRatio });
     } finally {
       const paintEnded = performance.now();
       recordRender({
         context: {
-          cellCount: frame.cells.length,
-          columns: frame.columns,
+          cellCount: draw.cellCount,
+          columns: draw.columns,
           cursor: state.cursor ? { ...state.cursor } : null,
-          operation: state.operation,
+          operation: program ? "prepared-demo" : state.operation,
           pinCursor: state.pinCursor,
-          rows: frame.rows,
-          showPrimeResults: state.showPrimeResults,
-          viewX: frame.viewX,
-          viewY: frame.viewY,
+          rows: draw.rows,
+          showPrimeResults: program ? false : state.showPrimeResults,
+          viewX: state.viewX,
+          viewY: state.viewY,
           xAxis: state.xAxis,
           yAxis: state.yAxis,
-          zoomDenominator: frame.zoomDenominator,
+          zoomDenominator: state.zoomDenominator,
         },
         paintMs: paintEnded - prepareEnded,
         prepareMs: prepareEnded - prepareStarted,

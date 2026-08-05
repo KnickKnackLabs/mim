@@ -10,7 +10,7 @@ export interface RenderContext {
   cellCount: number;
   columns: number;
   cursor: { x: number; y: number } | null;
-  operation: Operation;
+  operation: Operation | "prepared-demo";
   pinCursor: boolean;
   rows: number;
   showPrimeResults: boolean;

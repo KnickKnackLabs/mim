@@ -1,4 +1,9 @@
 <script lang="ts">
+  import {
+    compilePreparedDemo,
+    preparedDemoEnabled,
+    PREPARED_DEMO_SOURCE,
+  } from "./browser/prepared-demo";
   import { axisValueAt } from "./core/axis";
   import type { Command } from "./core/commands";
   import { reduceState } from "./core/reducer";
@@ -6,11 +11,15 @@
   import { commandForKey } from "./input/keyboard";
   import { operate } from "./instruments/gcd-lcm/math";
   import { visibleGridExtent, type VisibleGridExtent } from "./render/layout";
+  import type { EvaluationResult, PreparedFrame } from "./runtime";
   import Controls from "./ui/Controls.svelte";
   import HelpOverlay from "./ui/HelpOverlay.svelte";
   import LatticeCanvas from "./ui/LatticeCanvas.svelte";
   import PerformanceOverlay from "./ui/PerformanceOverlay.svelte";
 
+  const preparedDemo = preparedDemoEnabled(window.location.hash);
+  const preparedProgram = preparedDemo ? compilePreparedDemo() : null;
+  let preparedFrame: PreparedFrame | null = null;
   let state = createInitialState();
   let visibleExtent: VisibleGridExtent = visibleGridExtent(1, 1, 1);
 
@@ -46,6 +55,12 @@
       : reduceState(next, { type: "pan-view", dx, dy });
   }
 
+  function evaluationText(result: EvaluationResult | null): string {
+    if (!result) return "not evaluated";
+    if (result.kind === "number" || result.kind === "color") return `${result.value}`;
+    return `${result.kind}: ${result.message}`;
+  }
+
   function handleGlobalHelpKeydown(event: KeyboardEvent): void {
     if (event.defaultPrevented || (event.key !== "?" && event.key !== "Escape")) return;
     const command = commandForKey(event.key);
@@ -59,6 +74,7 @@
   $: selectedValue = selectedX === null || selectedY === null
     ? null
     : operate(state.operation, selectedX, selectedY);
+  $: preparedCell = preparedFrame?.selectedCell ?? null;
   $: recordedMotion = state.motionStart && state.motionEnd
     ? {
         dx: state.motionEnd.x - state.motionStart.x,
@@ -71,10 +87,25 @@
 <svelte:window on:keydown={handleGlobalHelpKeydown} />
 
 <main>
-  <Controls {state} {dispatch} />
+  {#if preparedDemo}
+    <aside class="prepared-demo" aria-label="Prepared frame demo">
+      <strong>prepared frame demo</strong>
+      <span>LCM → strip prime 31 → exact color</span>
+      <code>{PREPARED_DEMO_SOURCE.trim().replaceAll("\n", " · ")}</code>
+      <span>append <code>#legacy</code> to the URL for the merged renderer</span>
+    </aside>
+  {:else}
+    <Controls {state} {dispatch} />
+  {/if}
 
   <div class="instrument">
-    <LatticeCanvas {state} {dispatch} bind:visibleExtent />
+    <LatticeCanvas
+      {state}
+      {dispatch}
+      program={preparedProgram}
+      bind:preparedFrame
+      bind:visibleExtent
+    />
   </div>
 
   <PerformanceOverlay
@@ -94,7 +125,11 @@
     {:else if recordedMotion}
       <span>{recordedMotion.steps} motions · Δ({recordedMotion.dx}, {recordedMotion.dy})</span>
     {/if}
-    {#if state.cursor && selectedX !== null && selectedY !== null && selectedValue !== null}
+    {#if preparedDemo && preparedCell}
+      <strong>({preparedCell.x}, {preparedCell.y})</strong>
+      <span>field {evaluationText(preparedCell.evaluation.field)}</span>
+      <span>lens {evaluationText(preparedCell.evaluation.lens)}</span>
+    {:else if !preparedDemo && state.cursor && selectedX !== null && selectedY !== null && selectedValue !== null}
       <strong>{state.operation}({selectedX}, {selectedY})</strong>
       <span>= {selectedValue}</span>
     {:else}
