@@ -5,6 +5,10 @@
     BrowserProgram,
     BrowserProgramDiagnostic,
   } from "./browser/browser-program";
+  import {
+    uploadWatchCapture,
+    uploadWatchCaptureFailure,
+  } from "./browser/watch-capture";
   import { formatBrowserProgram } from "./browser/format-browser-program";
   import { loadBrowserProgram } from "./browser/load-browser-program";
   import { updateBrowserProgram } from "./browser/update-browser-program";
@@ -29,6 +33,7 @@
   import { operate } from "./instruments/gcd-lcm/math";
   import { visibleGridExtent, type VisibleGridExtent } from "./render/layout";
   import type { EvaluationResult, PreparedFrame } from "./runtime";
+  import type { WatchCaptureRequest } from "./watch/protocol";
   import Controls from "./ui/Controls.svelte";
   import HelpOverlay from "./ui/HelpOverlay.svelte";
   import LatticeCanvas from "./ui/LatticeCanvas.svelte";
@@ -45,6 +50,10 @@
   }
   let browserProgram: BrowserProgram | null = initialProgram?.loaded ?? null;
   let browserWatch = createBrowserWatchState();
+  let captureInFlight = false;
+  let latticeCanvas: LatticeCanvas;
+  let paintedRevision = 0;
+  let pendingCapture: WatchCaptureRequest | null = null;
   let preparedFrame: PreparedFrame | null = null;
   let programEditor: ProgramEditor;
   let watchStatus: WatchConnectionStatus = "connecting";
@@ -99,6 +108,7 @@
   onMount(() => {
     if (!watchedEndpoint) return;
     return connectWatchClient(watchedEndpoint, {
+      onCapture: (request) => pendingCapture = request,
       onStatus: (status) => watchStatus = status,
       onUpdate: (update) => {
         browserWatch = applyBrowserWatchUpdate(browserWatch, update);
@@ -108,6 +118,72 @@
   });
 
   $: preparedProgram = browserProgram?.program ?? null;
+
+  async function completeCapture(request: WatchCaptureRequest): Promise<void> {
+    captureInFlight = true;
+    try {
+      const capture = await (async () => {
+        try {
+          const next = await latticeCanvas.capturePng();
+          if (next.revision !== request.revision) {
+            throw new Error("canvas changed before capture encoding began");
+          }
+          return next;
+        } catch (error) {
+          await uploadWatchCaptureFailure(
+            window.location.href,
+            request,
+            error,
+          );
+          return null;
+        }
+      })();
+      if (!capture) return;
+
+      await uploadWatchCapture(
+        window.location.href,
+        request,
+        capture.image,
+        {
+          cssHeight: capture.cssHeight,
+          cssWidth: capture.cssWidth,
+          devicePixelRatio: capture.devicePixelRatio,
+          locale: navigator.language,
+          pixelHeight: capture.pixelHeight,
+          pixelWidth: capture.pixelWidth,
+          revision: capture.revision,
+          userAgent: navigator.userAgent,
+          viewX: capture.viewX,
+          viewY: capture.viewY,
+          zoomDenominator: capture.zoomDenominator,
+        },
+      );
+    } catch (error) {
+      console.error(error);
+    } finally {
+      if (pendingCapture?.id === request.id) pendingCapture = null;
+      captureInFlight = false;
+    }
+  }
+
+  $: if (
+    watchMode
+    && latticeCanvas
+    && pendingCapture
+    && !captureInFlight
+    && browserWatch.accepted
+    && browserWatch.revision === pendingCapture.revision
+    && paintedRevision === pendingCapture.revision
+  ) {
+    void completeCapture(pendingCapture);
+  }
+
+  $: if (
+    pendingCapture
+    && browserWatch.revision > pendingCapture.revision
+  ) {
+    pendingCapture = null;
+  }
 
   function handleGlobalHelpKeydown(event: KeyboardEvent): void {
     if (event.defaultPrevented || (event.key !== "?" && event.key !== "Escape")) return;
@@ -180,8 +256,11 @@
     <LatticeCanvas
       {state}
       {dispatch}
+      frameRevision={watchMode ? browserWatch.revision : 0}
       program={preparedProgram}
+      bind:paintedRevision
       bind:preparedFrame
+      bind:this={latticeCanvas}
       bind:visibleExtent
     />
   </div>

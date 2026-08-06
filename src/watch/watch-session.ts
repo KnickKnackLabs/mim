@@ -10,7 +10,7 @@ export interface WatchSessionResult {
 
 export interface WatchSessionOptions {
   file: string;
-  publish(update: WatchUpdate): void;
+  publish(update: WatchUpdate, accepted: boolean): void;
   reportDiagnostic(line: string): void;
   reportUpdate(line: string): void;
 }
@@ -41,7 +41,7 @@ export class WatchSession {
         this.#options.reportDiagnostic(formatWatchDiagnostic(this.#options.file, diagnostic));
       }
     }
-    this.#options.publish(update);
+    this.#options.publish(update, loaded.ok);
     return {
       diagnostics: loaded.diagnostics,
       update,

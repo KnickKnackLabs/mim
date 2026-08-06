@@ -1,13 +1,17 @@
 import {
+  CAPTURE_EVENT_NAME,
+  decodeCaptureRequest,
   decodeWatchUpdate,
   WATCH_EVENT_NAME,
   WATCH_EVENT_PATH,
+  type WatchCaptureRequest,
   type WatchUpdate,
 } from "../watch/protocol";
 
 export type WatchConnectionStatus = "connecting" | "connected" | "disconnected";
 
 export interface WatchClientCallbacks {
+  onCapture(request: WatchCaptureRequest): void;
   onStatus(status: WatchConnectionStatus): void;
   onUpdate(update: WatchUpdate): void;
 }
@@ -33,7 +37,13 @@ export function connectWatchClient(
     const update = decodeWatchUpdate((event as MessageEvent<string>).data);
     if (update) callbacks.onUpdate(update);
   };
+  const handleCapture = (event: Event): void => {
+    if (!active) return;
+    const request = decodeCaptureRequest((event as MessageEvent<string>).data);
+    if (request) callbacks.onCapture(request);
+  };
   events.addEventListener(WATCH_EVENT_NAME, handleUpdate);
+  events.addEventListener(CAPTURE_EVENT_NAME, handleCapture);
   events.onopen = () => {
     if (active) callbacks.onStatus("connected");
   };
@@ -43,6 +53,7 @@ export function connectWatchClient(
   return () => {
     active = false;
     events.removeEventListener(WATCH_EVENT_NAME, handleUpdate);
+    events.removeEventListener(CAPTURE_EVENT_NAME, handleCapture);
     events.onopen = null;
     events.onerror = null;
     events.close();

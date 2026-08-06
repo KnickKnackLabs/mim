@@ -9,7 +9,7 @@ Modular source. One portable HTML artifact.
 ![UI: Svelte](https://img.shields.io/badge/UI-Svelte-ff3e00?style=flat)
 ![core: TypeScript](https://img.shields.io/badge/core-TypeScript-3178c6?style=flat)
 ![renderer: Canvas 2D](https://img.shields.io/badge/renderer-Canvas%202D-175e7a?style=flat)
-![unit suites: 45](https://img.shields.io/badge/unit%20suites-45-brightgreen?style=flat)
+![unit suites: 49](https://img.shields.io/badge/unit%20suites-49-brightgreen?style=flat)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue?style=flat)](LICENSE)
 
 </div>
@@ -33,33 +33,37 @@ mise run mim:dev
 # Watch one program in a persistent browser.
 mise run mim:watch experiment.mim --open
 
+# Capture the current canvas from that live browser.
+mise run mim:capture http://127.0.0.1:4312/?watch=1 /tmp/mim.png
+
 # Build and open the portable artifact.
 mise run mim
 ```
 
 ## Architecture
 
-| Owner             | Responsibility                                            |
-| ----------------- | --------------------------------------------------------- |
-| `src/core`        | State, semantic commands, reducer                         |
-| `src/instruments` | Exact mathematics and display classifications             |
-| `src/input`       | Keyboard and pointer input translated into commands       |
-| `src/render`      | Canvas pixels from prepared display data                  |
-| `src/ui`          | Svelte controls and Canvas host                           |
-| `src/watch`       | File observation and loopback update transport            |
-| `scripts`         | CLI lifecycle, standalone build, and aggregate validation |
+| Owner             | Responsibility                                                              |
+| ----------------- | --------------------------------------------------------------------------- |
+| `src/core`        | State, semantic commands, reducer                                           |
+| `src/instruments` | Exact mathematics and display classifications                               |
+| `src/input`       | Keyboard and pointer input translated into commands                         |
+| `src/render`      | Canvas pixels from prepared display data                                    |
+| `src/ui`          | Svelte controls and Canvas host                                             |
+| `src/watch`       | File observation, live capture, and loopback transport                      |
+| `scripts`         | CLI lifecycle, standalone build, capture requests, and aggregate validation |
 
 ## Tasks
 
-| Task                 | Description                                    |
-| -------------------- | ---------------------------------------------- |
-| `mise run bats`      | Run BATS task-boundary tests                   |
-| `mise run doctor`    | Check local development setup                  |
-| `mise run mim`       | Build and open the standalone mim instrument   |
-| `mise run mim:build` | Build the standalone mim HTML artifact         |
-| `mise run mim:dev`   | Run the mim development server                 |
-| `mise run mim:watch` | Watch one .mim program in a persistent browser |
-| `mise run test`      | Run the complete mim validation path           |
+| Task                   | Description                                                |
+| ---------------------- | ---------------------------------------------------------- |
+| `mise run bats`        | Run BATS task-boundary tests                               |
+| `mise run doctor`      | Check local development setup                              |
+| `mise run mim`         | Build and open the standalone mim instrument               |
+| `mise run mim:build`   | Build the standalone mim HTML artifact                     |
+| `mise run mim:capture` | Capture the current canvas from one live mim watch session |
+| `mise run mim:dev`     | Run the mim development server                             |
+| `mise run mim:watch`   | Watch one .mim program in a persistent browser             |
+| `mise run test`        | Run the complete mim validation path                       |
 
 ## Validation
 

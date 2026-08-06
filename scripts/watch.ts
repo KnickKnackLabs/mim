@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { extname, resolve } from "node:path";
 
@@ -41,6 +42,27 @@ async function buildStandalone(): Promise<void> {
   });
   const status = await child.exited;
   if (status !== 0) throw new Error(`standalone build failed with status ${status}`);
+}
+
+async function repositoryState(): Promise<{ dirty: boolean; revision: string }> {
+  async function git(...args: string[]): Promise<string> {
+    const child = Bun.spawn(["git", ...args], {
+      cwd: repoRoot,
+      stderr: "pipe",
+      stdout: "pipe",
+    });
+    const [status, stdout, stderr] = await Promise.all([
+      child.exited,
+      new Response(child.stdout).text(),
+      new Response(child.stderr).text(),
+    ]);
+    if (status !== 0) throw new Error(stderr.trim() || `git ${args.join(" ")} failed`);
+    return stdout.trim();
+  }
+  return {
+    dirty: (await git("status", "--porcelain")).length > 0,
+    revision: await git("rev-parse", "HEAD"),
+  };
 }
 
 async function openBrowser(url: URL): Promise<void> {
@@ -116,10 +138,18 @@ export async function runWatch(args: WatchArguments): Promise<number> {
     await buildStandalone();
     if (shutdown.requested) return 0;
     const html = await readFile(resolve(repoRoot, "dist/mim.html"), "utf8");
-    server = startLoopbackWatchServer({ html });
+    const repository = await repositoryState();
+    server = startLoopbackWatchServer({
+      html,
+      runtime: {
+        htmlSha256: createHash("sha256").update(html).digest("hex"),
+        mimDirty: repository.dirty,
+        mimRevision: repository.revision,
+      },
+    });
     const session = new WatchSession({
       file: args.file,
-      publish: (update) => server?.publish(update),
+      publish: (update, accepted) => server?.publish(update, accepted),
       reportDiagnostic: console.error,
       reportUpdate: console.log,
     });

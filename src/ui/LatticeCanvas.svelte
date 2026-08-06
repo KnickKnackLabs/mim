@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
 
+  import { captureCanvasPng } from "../browser/canvas-png";
   import { createFrameDraw } from "../browser/create-frame-draw";
   import { axisValueAt } from "../core/axis";
   import type { Dispatch } from "../core/commands";
@@ -24,6 +25,8 @@
 
   export let state: MimState;
   export let dispatch: Dispatch;
+  export let frameRevision = 0;
+  export let paintedRevision = 0;
   export let program: ValidatedProgram | null = null;
   export let preparedFrame: PreparedFrame | null = null;
   export let visibleExtent: VisibleGridExtent = visibleGridExtent(1, 1, 1);
@@ -43,6 +46,12 @@
   let pendingWheelDelta = 0;
   let pendingWheelX = 0;
   let pendingWheelY = 0;
+  let paintedCssHeight = 1;
+  let paintedCssWidth = 1;
+  let paintedPixelRatio = 1;
+  let paintedViewX = 0;
+  let paintedViewY = 0;
+  let paintedZoomDenominator = 48;
   let panning = false;
   let pointerHidden = false;
   let pointerIdleTimer: number | null = null;
@@ -90,7 +99,32 @@
         totalMs: paintEnded - prepareStarted,
         wallTime: Date.now(),
       });
+      paintedRevision = frameRevision;
+      paintedCssHeight = cssHeight;
+      paintedCssWidth = cssWidth;
+      paintedPixelRatio = pixelRatio;
+      paintedViewX = state.viewX;
+      paintedViewY = state.viewY;
+      paintedZoomDenominator = state.zoomDenominator;
     }
+  }
+
+  export async function capturePng() {
+    const paintedCamera = {
+      revision: paintedRevision,
+      viewX: paintedViewX,
+      viewY: paintedViewY,
+      zoomDenominator: paintedZoomDenominator,
+    };
+    return {
+      ...await captureCanvasPng(
+        canvas,
+        paintedCssWidth,
+        paintedCssHeight,
+        paintedPixelRatio,
+      ),
+      ...paintedCamera,
+    };
   }
 
   onMount(() => {
