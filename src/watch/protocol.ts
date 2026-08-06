@@ -24,9 +24,11 @@ export interface BrowserCaptureMetadata {
   cssWidth: number;
   devicePixelRatio: number;
   locale: string;
+  parameters: Readonly<Record<string, number>>;
   pixelHeight: number;
   pixelWidth: number;
   revision: number;
+  timelineElapsedSeconds: number;
   userAgent: string;
   viewX: number;
   viewY: number;

@@ -57,9 +57,20 @@ export type ExpressionPlan =
 
 export interface ParameterPlan {
   initialValue: number;
-  kind: "prime";
+  kind: "number" | "prime";
   name: string;
   span: SourceSpan;
+}
+
+export type VariationMode = "loop" | "once" | "pingpong";
+
+export interface VariationPlan {
+  durationSeconds: number;
+  from: number;
+  mode: VariationMode;
+  parameter: string;
+  span: SourceSpan;
+  to: number;
 }
 
 export interface AxisPlan {
@@ -70,6 +81,7 @@ export interface AxisPlan {
 export interface ValidatedProgram {
   axes: { x: AxisPlan; y: AxisPlan };
   color: ExpressionPlan;
+  variations: VariationPlan[];
   field: ExpressionPlan;
   kind: "validated-program";
   lens: ExpressionPlan;

@@ -24,7 +24,7 @@ export interface CaptureArtifactMetadata {
     bytes: number;
     sha256: string;
   };
-  schemaVersion: 1;
+  schemaVersion: 2;
   source: {
     revision: number;
     sha256: string;
@@ -51,6 +51,19 @@ function captureDimension(value: unknown): value is number {
   return Number.isSafeInteger(value)
     && (value as number) > 0
     && (value as number) <= MAX_CAPTURE_DIMENSION;
+}
+
+function captureParameters(
+  value: unknown,
+): value is Readonly<Record<string, number>> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const entries = Object.entries(value as Record<string, unknown>);
+  return entries.length <= 256 && entries.every(
+    ([name, parameter]) => name.length >= 1
+      && name.length <= 128
+      && finiteNumber(parameter)
+      && Math.abs(parameter) <= Number.MAX_SAFE_INTEGER,
+  );
 }
 
 function crc32(value: Uint8Array): number {
@@ -80,6 +93,7 @@ export function parseBrowserCaptureMetadata(
     )
     || !captureDimension(candidate.pixelHeight)
     || !captureDimension(candidate.pixelWidth)
+    || !captureParameters(candidate.parameters)
     || !finiteNumber(candidate.devicePixelRatio)
     || candidate.devicePixelRatio < 1
     || candidate.devicePixelRatio > 8
@@ -99,6 +113,9 @@ export function parseBrowserCaptureMetadata(
     || Math.abs(candidate.viewY) > 1_000_000_000
     || !Number.isSafeInteger(candidate.revision)
     || (candidate.revision as number) < 1
+    || !finiteNumber(candidate.timelineElapsedSeconds)
+    || (candidate.timelineElapsedSeconds as number) < 0
+    || (candidate.timelineElapsedSeconds as number) > Number.MAX_SAFE_INTEGER
     || typeof candidate.locale !== "string"
     || candidate.locale.length > 128
     || typeof candidate.userAgent !== "string"
@@ -210,7 +227,7 @@ export async function writeCaptureArtifact(
       bytes: input.image.byteLength,
       sha256: sha256(input.image),
     },
-    schemaVersion: 1,
+    schemaVersion: 2,
     source: {
       revision: input.source.revision,
       sha256: sha256(input.source.source),

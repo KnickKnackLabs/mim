@@ -15,6 +15,8 @@ describe("formatProgram", () => {
       # comments do not survive canonical output
       :mim    1
       :param p prime=31
+      :param phase number=0
+      :vary phase from 0 to 31 over 8s loop
       :axis x integers
       :field lcm(x,y)
       :lens strip(value,p)
@@ -24,6 +26,8 @@ describe("formatProgram", () => {
     const canonical = [
       ":mim 1",
       ":param p prime = 31",
+      ":param phase number = 0",
+      ":vary phase from 0 to 31 over 8s loop",
       ":axis x integers",
       ":field lcm(x, y)",
       ":lens strip(value, p)",

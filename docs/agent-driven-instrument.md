@@ -1,6 +1,6 @@
 # Mim as an agent-driven evolving instrument
 
-Status: agent-driven foundation implemented; native evolution is the next design lane
+Status: agent-driven foundation and native variation implemented
 
 ## Main intent
 
@@ -14,7 +14,7 @@ and explain what it found.
 The browser remains useful for direct exploration.
 The program is the durable source of truth.
 UI controls, file watching, capture,
-and future animation should all operate on the same validated model.
+and native variation all operate on the same validated model.
 
 ## Current program model
 
@@ -46,9 +46,10 @@ The implemented source path is explicit:
 
 1. `src/language` parses source into `ProgramAst` with source spans.
 1. `src/program` validates structure, names, types, and supported definitions.
+1. `src/timeline` maps pure logical elapsed time to variation parameter values.
 1. `src/runtime` evaluates a `ValidatedProgram` and prepares a `PreparedFrame`.
-1. `src/browser` adapts the prepared frame to browser state.
-1. `src/browser/canvas` paints it without owning language or validation rules.
+1. `src/browser` adapts the prepared frame and browser clock to the pure owners.
+1. `src/browser/canvas` paints it without owning language, timeline, or validation rules.
 
 The mathematical core does not depend on Svelte,
 the browser,
@@ -85,8 +86,10 @@ mise run mim:capture <watch-url> /tmp/radial.png
 ```
 
 The server requests the exact accepted revision from the listening page.
+For a varying program, capture pauses on one exact logical elapsed time and bound parameter set.
 `LatticeCanvas` returns the PNG from the canvas it actually painted.
-The browser uploads the image and camera/viewport metadata to the loopback server.
+The browser uploads the image, camera/viewport state, timeline time, and bound parameters to the loopback server.
+Schema 2 sidecars preserve that exact variation frame.
 The server validates PNG structure and checksums,
 then publishes the PNG and JSON sidecar without replacing an existing artifact.
 The browser never chooses the filesystem destination.
@@ -102,11 +105,12 @@ and server shutdown.
 
 `examples/` contains small teaching instruments for:
 
+- animated radial residues modulo 31;
 - the GCD lattice;
 - prime-stripped LCM;
 - XOR interference;
 - dyadic LCM depth; and
-- radial residues modulo 31.
+- static radial residues modulo 31.
 
 Each example is valid executable `.mim` source.
 Its comments explain both the mathematical idea and the purpose of nearby statements.
@@ -117,6 +121,8 @@ Its comments explain both the mathematical idea and the purpose of nearby statem
 - Invalid input never replaces the last valid picture.
 - Source locations survive through diagnostics.
 - Browser/UI state does not leak into the mathematical core.
+- Browser frame callbacks adapt a clock; pure timeline state owns logical time.
+- Dropped frames jump to the correct logical time instead of accumulating deltas.
 - The static standalone/default path remains available.
 - `#legacy` remains a rollback path while the program-driven path earns parity.
 - Watch mode has one source writer: the watched file.
@@ -129,7 +135,9 @@ Its comments explain both the mathematical idea and the purpose of nearby statem
 Implemented now:
 
 - `.mim` parsing, formatting, diagnostics, and validation;
-- generic axes, parameters, expressions, fields, lenses, color intent, and overlays;
+- generic axes, number/prime parameters, expressions, fields, lenses, color intent, and overlays;
+- explicit `:vary` statements with deterministic `loop`, `pingpong`, and `once` modes;
+- pure logical-time evaluation, pause, restart, and bounded playback speed;
 - pure execution and prepared frames;
 - Canvas painting with a legacy rollback;
 - browser editing with last-valid preservation;
@@ -139,8 +147,8 @@ Implemented now:
 
 Future design, not current syntax or behavior:
 
-- native parameter stepping and continuous evolution;
-- deterministic timelines and replayable animation;
+- discrete `through … every …` variation;
+- serializable event timelines and replayable animation artifacts;
 - frame sequences, contact sheets, and video;
 - broader parameter types, view declarations, and color encodings;
 - chained lens pipelines;
@@ -148,21 +156,27 @@ Future design, not current syntax or behavior:
 - cold/headless capture for CI; and
 - removal of the legacy path after accepted parity.
 
-## Next design lane: native evolution
+## Native variation boundary
 
-The file-rewrite experiment proved that watch mode is good for human- and agent-paced edits,
-not smooth animation.
-Animation should evolve validated runtime state inside mim.
+A number parameter can vary continuously from its declared initial value:
 
-The next design must decide:
+```text
+:param phase number = 0
+:vary phase from 0 to 31 over 8s loop
+```
 
-- which parameters may evolve;
-- whether evolution is step-based, time-based, or both;
-- how pause, speed, reset, and deterministic replay work;
-- how the browser and an agent issue the same semantic evolution commands;
-- how a timeline records exact inputs rather than browser timing accidents; and
-- how capture identifies a precise frame.
+The explicit `from` value must equal the parameter declaration.
+`loop` wraps after one forward duration,
+`pingpong` takes one duration in each direction,
+and `once` holds at the endpoint and stops scheduling when every variation is complete.
 
-That lane should preserve deterministic programs,
-last-valid behavior,
-and the current dependency direction.
+Logical time derives from a monotonic anchor rather than accumulated frame deltas.
+Valid editor or watch source replacement restarts at zero;
+invalid source preserves the active program and timeline.
+Programs without `:vary` and the `#legacy` path schedule no animation.
+
+The next lane is a serializable event timeline and derived animation artifacts.
+Discrete variation,
+frame sequences,
+contact sheets,
+and video remain outside the current syntax.

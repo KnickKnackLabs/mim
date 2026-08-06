@@ -18,6 +18,7 @@ export function createFrameDraw(
   state: MimState,
   extent: VisibleGridExtent,
   program: ValidatedProgram | null,
+  parameters?: Readonly<Record<string, number>>,
 ): FrameDraw {
   if (!program) {
     const frame = buildFrame(state, extent);
@@ -32,6 +33,7 @@ export function createFrameDraw(
 
   const preparation = prepareFrame(program, {
     bounds: extent,
+    parameters,
     selected: state.cursor
       ? { column: state.cursor.x, row: state.cursor.y }
       : null,

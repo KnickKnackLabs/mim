@@ -7,6 +7,7 @@ import {
   type WatchCaptureRequest,
   type WatchUpdate,
 } from "../watch/protocol";
+import { preparedDemoEnabled } from "./prepared-demo";
 
 export type WatchConnectionStatus = "connecting" | "connected" | "disconnected";
 
@@ -20,7 +21,10 @@ export type WatchEventSourceFactory = (endpoint: URL) => EventSource;
 
 export function watchEndpoint(href: string): URL | null {
   const page = new URL(href);
-  if (page.searchParams.get("watch") !== "1") return null;
+  if (
+    page.searchParams.get("watch") !== "1"
+    || !preparedDemoEnabled(page.hash)
+  ) return null;
   return new URL(WATCH_EVENT_PATH, page);
 }
 

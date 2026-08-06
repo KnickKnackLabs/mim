@@ -1,0 +1,26 @@
+# Animated radial residues modulo 31
+# A native variation moves the radial field through one seamless modular period.
+
+:mim 1
+
+# The phase is a finite number that starts at zero.
+:param phase number = 0
+
+# Move phase from 0 to 31 in eight seconds, then loop.
+# The endpoint matches the field's period, so the wrap is seamless.
+:vary phase from 0 to 31 over 8s loop
+
+# The signed lattice keeps the origin at the visual center.
+:axis x integers
+:axis y integers
+
+# Shift one radial coordinate by the evolving phase.
+# Squared distance modulo 31 turns that shift into moving curved bands.
+:field mod((x + phase) * (x + phase) + y * y, 31)
+
+# Preserve the remainder and map its magnitude to a continuous paint scale.
+:lens value
+:color magnitude(lens)
+
+# The diagonal is unrelated to this radial instrument.
+:overlay equality off

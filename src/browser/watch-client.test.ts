@@ -53,6 +53,7 @@ class FakeEventSource {
 describe("browser watch endpoint", () => {
   test("uses the page origin only in explicit watch mode", () => {
     expect(watchEndpoint("http://127.0.0.1:4312/")).toBeNull();
+    expect(watchEndpoint("http://127.0.0.1:4312/?watch=1#legacy")).toBeNull();
 
     const endpoint = watchEndpoint("http://127.0.0.1:4312/?watch=1");
     expect(endpoint?.origin).toBe("http://127.0.0.1:4312");

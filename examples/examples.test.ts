@@ -11,6 +11,7 @@ const exampleNames = readdirSync(import.meta.dir)
 describe("annotated example programs", () => {
   test("keeps the curated teaching library visible", () => {
     expect(exampleNames).toEqual([
+      "animated-radial-residues-31.mim",
       "dyadic-lcm-depth.mim",
       "gcd-lattice.mim",
       "prime-stripped-lcm.mim",

@@ -22,9 +22,18 @@
     createBrowserWatchState,
   } from "./browser/watch-mode";
   import {
+    createTimelineClock,
+    type TimelineClock,
+  } from "./browser/timeline-clock";
+  import {
     preparedDemoEnabled,
     PREPARED_DEMO_SOURCE,
   } from "./browser/prepared-demo";
+  import {
+    pauseTimelineForCapture,
+    resumeTimelineAfterCapture,
+    timelineAfterProgramUpdate,
+  } from "./browser/program-timeline";
   import { axisValueAt } from "./core/axis";
   import type { Command } from "./core/commands";
   import { reduceState } from "./core/reducer";
@@ -33,12 +42,20 @@
   import { operate } from "./instruments/gcd-lcm/math";
   import { visibleGridExtent, type VisibleGridExtent } from "./render/layout";
   import type { EvaluationResult, PreparedFrame } from "./runtime";
+  import {
+    createTimelineState,
+    reduceTimeline,
+    timelineFrameAt,
+    type TimelineState,
+  } from "./timeline";
   import type { WatchCaptureRequest } from "./watch/protocol";
   import Controls from "./ui/Controls.svelte";
   import HelpOverlay from "./ui/HelpOverlay.svelte";
   import LatticeCanvas from "./ui/LatticeCanvas.svelte";
   import PerformanceOverlay from "./ui/PerformanceOverlay.svelte";
   import ProgramEditor from "./ui/ProgramEditor.svelte";
+  import TimelineControls from "./ui/TimelineControls.svelte";
+  import type { TimelineControlIntent } from "./ui/timeline-controls";
 
   const watchedEndpoint = watchEndpoint(window.location.href);
   const watchMode = watchedEndpoint !== null;
@@ -51,13 +68,19 @@
   let browserProgram: BrowserProgram | null = initialProgram?.loaded ?? null;
   let browserWatch = createBrowserWatchState();
   let captureInFlight = false;
+  let captureResumeTimeline = false;
+  let captureTimelineElapsedSeconds: number | null = null;
   let latticeCanvas: LatticeCanvas;
   let paintedRevision = 0;
+  let paintedTimelineElapsedSeconds = 0;
   let pendingCapture: WatchCaptureRequest | null = null;
   let preparedFrame: PreparedFrame | null = null;
   let programEditor: ProgramEditor;
   let watchStatus: WatchConnectionStatus = "connecting";
   let state = createInitialState();
+  let timelineClock: TimelineClock | null = null;
+  let timelineState: TimelineState = createTimelineState(performance.now());
+  let timelineTimestampMilliseconds = timelineState.anchorTimestampMilliseconds;
   let visibleExtent: VisibleGridExtent = visibleGridExtent(1, 1, 1);
 
   function dispatch(command: Command): void {
@@ -98,26 +121,121 @@
     return `${result.kind}: ${result.message}`;
   }
 
+  function resetTimeline(timestampMilliseconds = performance.now()): void {
+    timelineState = timelineAfterProgramUpdate(
+      timelineState,
+      true,
+      timestampMilliseconds,
+    );
+    timelineTimestampMilliseconds = timestampMilliseconds;
+    captureResumeTimeline = false;
+    captureTimelineElapsedSeconds = null;
+    pendingCapture = null;
+  }
+
+  function dispatchTimeline(intent: TimelineControlIntent): void {
+    const timestampMilliseconds = performance.now();
+    timelineState = intent.type === "set-speed"
+      ? reduceTimeline(timelineState, {
+          speed: intent.speed,
+          timestampMilliseconds,
+          type: "set-speed",
+        })
+      : reduceTimeline(timelineState, {
+          timestampMilliseconds,
+          type: intent.type,
+        });
+    timelineTimestampMilliseconds = timestampMilliseconds;
+  }
+
+  function beginCapture(request: WatchCaptureRequest): void {
+    const timestampMilliseconds = performance.now();
+    const paused = pauseTimelineForCapture(
+      browserProgram?.program.variations ?? [],
+      timelineState,
+      timestampMilliseconds,
+    );
+    captureResumeTimeline = paused.resume;
+    timelineState = paused.state;
+    timelineTimestampMilliseconds = timestampMilliseconds;
+    captureTimelineElapsedSeconds = paused.elapsedSeconds;
+    pendingCapture = request;
+  }
+
+  function finishCapture(request: WatchCaptureRequest): void {
+    if (pendingCapture?.id !== request.id) return;
+    const resume = captureResumeTimeline;
+    captureResumeTimeline = false;
+    captureTimelineElapsedSeconds = null;
+    pendingCapture = null;
+    if (!resume) return;
+    const timestampMilliseconds = performance.now();
+    timelineState = resumeTimelineAfterCapture(
+      timelineState,
+      true,
+      timestampMilliseconds,
+    );
+    timelineTimestampMilliseconds = timestampMilliseconds;
+  }
+
+  function cancelPendingCapture(): void {
+    if (!pendingCapture) return;
+    finishCapture(pendingCapture);
+  }
+
   function applyPreparedSource(source: string): readonly BrowserProgramDiagnostic[] {
     if (!browserProgram) return [];
     const update = updateBrowserProgram(browserProgram, source);
     browserProgram = update.active;
+    if (update.accepted) resetTimeline();
     return update.diagnostics;
   }
 
   onMount(() => {
-    if (!watchedEndpoint) return;
-    return connectWatchClient(watchedEndpoint, {
-      onCapture: (request) => pendingCapture = request,
-      onStatus: (status) => watchStatus = status,
-      onUpdate: (update) => {
-        browserWatch = applyBrowserWatchUpdate(browserWatch, update);
-        browserProgram = browserWatch.active;
-      },
+    timelineClock = createTimelineClock((timestampMilliseconds) => {
+      timelineTimestampMilliseconds = timestampMilliseconds;
     });
+    const disconnect = watchedEndpoint
+      ? connectWatchClient(watchedEndpoint, {
+          onCapture: beginCapture,
+          onStatus: (status) => watchStatus = status,
+          onUpdate: (update) => {
+            const previous = browserWatch;
+            browserWatch = applyBrowserWatchUpdate(browserWatch, update);
+            browserProgram = browserWatch.active;
+            if (
+              browserWatch !== previous
+              && browserWatch.revision > previous.revision
+              && browserWatch.accepted
+            ) {
+              resetTimeline();
+            }
+          },
+        })
+      : null;
+    return () => {
+      disconnect?.();
+      timelineClock?.close();
+      timelineClock = null;
+    };
   });
 
   $: preparedProgram = browserProgram?.program ?? null;
+  $: timelineFrame = timelineFrameAt(
+    preparedProgram?.variations ?? [],
+    timelineState,
+    timelineTimestampMilliseconds,
+  );
+  $: timelineComplete = Boolean(
+    preparedProgram?.variations.length
+    && !timelineFrame.hasFutureVariation,
+  );
+  $: timelineClock?.setRunning(Boolean(
+    preparedProgram?.variations.length
+    && timelineState.playing
+    && timelineFrame.hasFutureVariation
+    && !pendingCapture,
+  ));
 
   async function completeCapture(request: WatchCaptureRequest): Promise<void> {
     captureInFlight = true;
@@ -127,6 +245,9 @@
           const next = await latticeCanvas.capturePng();
           if (next.revision !== request.revision) {
             throw new Error("canvas changed before capture encoding began");
+          }
+          if (next.timelineElapsedSeconds !== captureTimelineElapsedSeconds) {
+            throw new Error("timeline changed before capture encoding began");
           }
           return next;
         } catch (error) {
@@ -149,9 +270,11 @@
           cssWidth: capture.cssWidth,
           devicePixelRatio: capture.devicePixelRatio,
           locale: navigator.language,
+          parameters: capture.parameters,
           pixelHeight: capture.pixelHeight,
           pixelWidth: capture.pixelWidth,
           revision: capture.revision,
+          timelineElapsedSeconds: capture.timelineElapsedSeconds,
           userAgent: navigator.userAgent,
           viewX: capture.viewX,
           viewY: capture.viewY,
@@ -161,8 +284,8 @@
     } catch (error) {
       console.error(error);
     } finally {
-      if (pendingCapture?.id === request.id) pendingCapture = null;
       captureInFlight = false;
+      finishCapture(request);
     }
   }
 
@@ -174,6 +297,7 @@
     && browserWatch.accepted
     && browserWatch.revision === pendingCapture.revision
     && paintedRevision === pendingCapture.revision
+    && paintedTimelineElapsedSeconds === captureTimelineElapsedSeconds
   ) {
     void completeCapture(pendingCapture);
   }
@@ -182,7 +306,7 @@
     pendingCapture
     && browserWatch.revision > pendingCapture.revision
   ) {
-    pendingCapture = null;
+    cancelPendingCapture();
   }
 
   function handleGlobalHelpKeydown(event: KeyboardEvent): void {
@@ -252,13 +376,25 @@
     <Controls {state} {dispatch} />
   {/if}
 
+  {#if preparedProgram?.variations.length}
+    <TimelineControls
+      complete={timelineComplete}
+      dispatch={dispatchTimeline}
+      elapsedSeconds={timelineFrame.elapsedSeconds}
+      state={timelineState}
+    />
+  {/if}
+
   <div class="instrument">
     <LatticeCanvas
       {state}
       {dispatch}
       frameRevision={watchMode ? browserWatch.revision : 0}
+      parameterOverrides={timelineFrame.overrides}
       program={preparedProgram}
+      timelineElapsedSeconds={timelineFrame.elapsedSeconds}
       bind:paintedRevision
+      bind:paintedTimelineElapsedSeconds
       bind:preparedFrame
       bind:this={latticeCanvas}
       bind:visibleExtent

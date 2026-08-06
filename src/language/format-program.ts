@@ -6,6 +6,9 @@ function formatStatement(statement: ProgramStatement): string {
   if (statement.kind === "parameter") {
     return `:param ${statement.name} ${statement.parameterType} = ${formatExpression(statement.initial)}`;
   }
+  if (statement.kind === "variation") {
+    return `:vary ${statement.parameter} from ${statement.from} to ${statement.to} over ${statement.durationSeconds}s ${statement.mode}`;
+  }
   if (statement.kind === "axis") {
     return `:axis ${statement.axis} ${formatExpression(statement.definition)}`;
   }

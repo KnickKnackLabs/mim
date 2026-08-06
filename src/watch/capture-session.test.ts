@@ -15,9 +15,11 @@ const browser: BrowserCaptureMetadata = {
   cssWidth: 1280,
   devicePixelRatio: 1,
   locale: "en-US",
+  parameters: { phase: 4 },
   pixelHeight: 720,
   pixelWidth: 1280,
   revision: 3,
+  timelineElapsedSeconds: 1,
   userAgent: "test",
   viewX: 0,
   viewY: 0,
@@ -31,7 +33,7 @@ function metadata(output: string): CaptureArtifactMetadata {
     mim: { htmlSha256: "h", mimDirty: false, mimRevision: "r" },
     output,
     png: { bytes: 8, sha256: "p" },
-    schemaVersion: 1,
+    schemaVersion: 2,
     source: { revision: 3, sha256: "s" },
   };
 }

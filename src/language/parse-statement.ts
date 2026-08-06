@@ -39,6 +39,20 @@ export function parseStatement(
     return { axis, definition, kind: "axis", span };
   }
 
+  if (name === "vary") {
+    const parameter = reader.identifier("parameter name");
+    reader.keyword("from");
+    const from = reader.number("starting value");
+    reader.keyword("to");
+    const to = reader.number("ending value");
+    reader.keyword("over");
+    const durationSeconds = reader.number("duration");
+    reader.expect("s");
+    const mode = reader.identifier("variation mode");
+    reader.finish();
+    return { durationSeconds, from, kind: "variation", mode, parameter, span, to };
+  }
+
   if (name === "field" || name === "lens" || name === "color") {
     const expression = reader.expression();
     reader.finish();

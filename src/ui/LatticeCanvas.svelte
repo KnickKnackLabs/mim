@@ -27,11 +27,16 @@
   export let dispatch: Dispatch;
   export let frameRevision = 0;
   export let paintedRevision = 0;
+  export let paintedTimelineElapsedSeconds = 0;
+  export let parameterOverrides: Readonly<Record<string, number>> = {};
   export let program: ValidatedProgram | null = null;
   export let preparedFrame: PreparedFrame | null = null;
+  export let timelineElapsedSeconds = 0;
   export let visibleExtent: VisibleGridExtent = visibleGridExtent(1, 1, 1);
 
   let canvas: HTMLCanvasElement;
+  // Keep the painted bitmap stable while asynchronous PNG encoding reads it.
+  let captureLocked = false;
   let cssHeight = 1;
   let cssWidth = 1;
   let dragLastX = 0;
@@ -46,8 +51,10 @@
   let pendingWheelDelta = 0;
   let pendingWheelX = 0;
   let pendingWheelY = 0;
+  let paintGeneration = 0;
   let paintedCssHeight = 1;
   let paintedCssWidth = 1;
+  let paintedParameters: Readonly<Record<string, number>> = {};
   let paintedPixelRatio = 1;
   let paintedViewX = 0;
   let paintedViewY = 0;
@@ -69,10 +76,14 @@
     state.viewX,
     state.viewY,
   );
-  $: if (canvas && cssWidth > 1 && cssHeight > 1) {
+  $: if (canvas && cssWidth > 1 && cssHeight > 1 && !captureLocked) {
     const prepareStarted = performance.now();
-    const draw = createFrameDraw(state, visibleExtent, program);
-    preparedFrame = draw.preparedFrame;
+    const draw = createFrameDraw(
+      state,
+      visibleExtent,
+      program,
+      parameterOverrides,
+    );
     const prepareEnded = performance.now();
     try {
       draw.paint(canvas, { cssHeight, cssWidth, pixelRatio });
@@ -100,31 +111,48 @@
         wallTime: Date.now(),
       });
     }
+    paintGeneration += 1;
     paintedRevision = frameRevision;
     paintedCssHeight = cssHeight;
     paintedCssWidth = cssWidth;
+    paintedParameters = draw.preparedFrame?.parameters ?? {};
     paintedPixelRatio = pixelRatio;
+    paintedTimelineElapsedSeconds = timelineElapsedSeconds;
+    preparedFrame = draw.preparedFrame;
     paintedViewX = state.viewX;
     paintedViewY = state.viewY;
     paintedZoomDenominator = state.zoomDenominator;
   }
 
   export async function capturePng() {
-    const paintedCamera = {
+    if (captureLocked) throw new Error("canvas capture is already in progress");
+    captureLocked = true;
+    const generation = paintGeneration;
+    const paintedState = {
+      parameters: { ...paintedParameters },
       revision: paintedRevision,
+      timelineElapsedSeconds: paintedTimelineElapsedSeconds,
       viewX: paintedViewX,
       viewY: paintedViewY,
       zoomDenominator: paintedZoomDenominator,
     };
-    return {
-      ...await captureCanvasPng(
+    try {
+      const image = await captureCanvasPng(
         canvas,
         paintedCssWidth,
         paintedCssHeight,
         paintedPixelRatio,
-      ),
-      ...paintedCamera,
-    };
+      );
+      if (generation !== paintGeneration) {
+        throw new Error("canvas changed while capture was encoding");
+      }
+      return {
+        ...image,
+        ...paintedState,
+      };
+    } finally {
+      captureLocked = false;
+    }
   }
 
   onMount(() => {

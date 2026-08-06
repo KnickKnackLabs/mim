@@ -7,6 +7,7 @@ import { indexStatements } from "./statement-index";
 import type { ExpressionPlan } from "./types";
 import { validateAxes } from "./validate-axes";
 import { requireExpressionType, validateExpression } from "./validate-expression";
+import { validateVariations } from "./validate-variations";
 import { validateOverlays } from "./validate-overlays";
 import { validateParameters } from "./validate-parameters";
 
@@ -25,6 +26,11 @@ export function validateProgram(
 
   const statements = indexStatements(ast);
   const parameterValidation = validateParameters(statements.parameters, diagnostics);
+  const variations = validateVariations(
+    statements.variations,
+    parameterValidation.parameters,
+    diagnostics,
+  );
   const axes = validateAxes(statements.axes, definitions, diagnostics);
   const overlays = validateOverlays(statements.overlays, diagnostics);
   const fieldStatement = requireOneStatement("field", statements.fields, ast.span, diagnostics);
@@ -81,6 +87,7 @@ export function validateProgram(
     program: {
       axes: { x: axes.x, y: axes.y },
       color: color as ExpressionPlan,
+      variations,
       field: field as ExpressionPlan,
       kind: "validated-program",
       lens: lens as ExpressionPlan,

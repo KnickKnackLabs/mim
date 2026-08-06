@@ -3,6 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { createInitialState } from "../core/state";
 import { compilePreparedDemo } from "./prepared-demo";
 import { createFrameDraw } from "./create-frame-draw";
+import { loadBrowserProgram } from "./load-browser-program";
 
 const oneCellExtent = {
   columns: 1,
@@ -27,6 +28,32 @@ describe("browser frame draw selection", () => {
     });
     expect({ cells: draw.cellCount, columns: draw.columns, rows: draw.rows })
       .toEqual({ cells: 1, columns: 1, rows: 1 });
+  });
+
+  test("passes timeline parameter overrides through frame preparation", () => {
+    const loaded = loadBrowserProgram(`:mim 1
+:param phase number = 0
+:vary phase from 0 to 31 over 8s loop
+:axis x integers
+:axis y integers
+:field x + phase
+:lens value
+:color exact(lens)
+:overlay equality off
+`);
+    if (!loaded.ok) throw new Error("expected variation program to load");
+
+    const draw = createFrameDraw(
+      createInitialState(),
+      oneCellExtent,
+      loaded.loaded.program,
+      { phase: 4 },
+    );
+    expect(draw.preparedFrame?.cells[0]?.evaluation.field).toEqual({
+      kind: "number",
+      value: 35,
+    });
+    expect(draw.preparedFrame?.parameters).toEqual({ phase: 4 });
   });
 
   test("keeps the legacy frame path available", () => {

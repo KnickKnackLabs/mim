@@ -34,19 +34,26 @@ Source-aware formatting preserves comments and blank grouping.
 
 `src/program` owns semantic validation and produces `ValidatedProgram`.
 The implemented vocabulary covers the current version,
-parameters,
+prime and number parameters,
+continuous `:vary` statements,
 axes,
 field and lens expressions,
 color intent,
 and overlays.
 Speculative view,
-timeline,
+discrete variation,
+serializable event-timeline,
 and command-shell syntax was not added.
 
 ### Runtime and frame preparation
 
+`src/timeline` maps immutable logical playback state to deterministic variation overrides.
+It owns play/pause/restart,
+bounded speed,
+and `loop`, `pingpong`, and `once` evaluation.
+
 `src/runtime` evaluates validated expressions and program channels.
-It binds runtime parameters,
+It binds static or varied runtime parameters,
 reports invalid domains,
 and prepares one serializable `PreparedFrame`.
 
@@ -82,7 +89,7 @@ The canvas owns PNG extraction and painted-state metadata.
 The browser uploads to its same-origin loopback server.
 The server validates PNG structure and checksums, then publishes the PNG and JSON sidecar without replacing an existing artifact.
 
-Metadata records the source and PNG hashes,
+Schema 2 metadata records the source and PNG hashes,
 source revision,
 mim revision and dirty state,
 standalone artifact hash,
@@ -91,12 +98,15 @@ camera,
 viewport,
 device scale,
 dimensions,
+exact logical timeline time,
+bound parameter values,
 and timestamp.
 Repeated unchanged captures produced byte-identical PNGs in the accepted local trial.
 
 ### Annotated examples
 
-`examples/` contains five executable teaching programs.
+`examples/` contains six executable teaching programs,
+including one native animated radial-residues instrument.
 An owner-level test discovers and validates every `.mim` file through the real browser-program loader.
 README content is derived from title and description comments in the examples.
 No generated screenshots are committed.
@@ -108,7 +118,8 @@ examples/                         curated executable programs
 src/language/                     parsing, spans, diagnostics, formatting
 src/program/                      semantic validation
 src/runtime/                      evaluation and PreparedFrame
-src/browser/                      browser program, watch, and capture adapters
+src/timeline/                     pure variation evaluation and playback state
+src/browser/                      browser program, watch, clock, and capture adapters
 src/browser/canvas/               Canvas painting
 src/watch/                        observation, protocol, loopback, capture lifecycle/artifacts
 src/ui/                           human-facing controls and editor
@@ -120,52 +131,55 @@ scripts/                          typed command orchestration and aggregate test
 
 The completed foundation has been exercised through:
 
-- focused parser, validator, runtime, prepared-frame, editor, watch, and capture tests;
+- focused parser, validator, timeline, runtime, prepared-frame, editor, watch, and capture tests;
 - aggregate unit discovery including examples and command scripts;
 - Svelte diagnostics;
 - standalone single-file builds;
 - BATS task-boundary tests;
 - codebase lint and generated README checks;
 - a real file-watch valid/invalid/recovery trial;
-- repeated listening-browser captures with byte-identical PNG output; and
+- an isolated native-variation trial covering smooth playback, pause, restart,
+  bounded speed, valid-source reset, static and fresh-load `#legacy` refusal,
+  and clean process shutdown;
+- repeated paused-frame captures with byte-identical PNG output,
+  exact logical elapsed time, and exact bound parameters; and
 - human review of captured mathematical examples.
 
 Exact gate counts belong in the PR or completion receipt,
 not as a number that this plan must keep current.
 
+## Implemented native variation
+
+Number parameters can vary through explicit continuous statements:
+
+```text
+:param phase number = 0
+:vary phase from 0 to 31 over 8s loop
+```
+
+The initial values must agree.
+Pure logical time supports independent `loop`, `pingpong`, and `once` plans,
+deterministic pause/restart,
+and bounded 0.25×–4× speed.
+The browser frame callback is only a clock adapter.
+Valid source replacement restarts at zero;
+invalid replacement preserves the active program and timeline.
+Capture pauses and identifies one exact successfully painted logical frame.
+Static programs and `#legacy` schedule no animation.
+
 ## Remaining sequence
 
-### 1. Native parameter evolution
+### 1. Deterministic timelines and animation artifacts
 
-This is the next design lane.
-It should evolve validated runtime state without rewriting the `.mim` file for every frame.
-
-The design must specify:
-
-- evolvable parameter types and bounds;
-- semantic step/time commands;
-- pause, resume, reset, speed, and direction;
-- deterministic clock and replay behavior;
-- browser and agent command parity;
-- frame identity for capture; and
-- failure behavior when an update becomes invalid.
-
-Acceptance should prove that a chosen example evolves smoothly,
-can pause on an exact frame,
-replays deterministically,
-and remains controllable without introducing a second source writer.
-
-### 2. Deterministic timelines and animation artifacts
-
-After parameter evolution is accepted,
-add a serializable timeline of semantic inputs and frame identities.
-Then consider frame sequences,
+Add a serializable timeline of semantic inputs and frame identities.
+Then consider discrete `through … every …` variation,
+frame sequences,
 contact sheets,
 and video as derived artifacts.
 
 This phase must not depend on wall-clock accidents or repeated source-file writes.
 
-### 3. Migration and legacy cleanup
+### 2. Migration and legacy cleanup
 
 Only after the program path has accepted behavioral and visual parity:
 
@@ -179,10 +193,12 @@ Only after the program path has accepted behavioral and visual parity:
 
 The current foundation completes agent-driven edit,
 watch,
-capture,
+native continuous variation,
+exact live-frame capture,
 inspection,
 and explanation.
-It does not complete native evolution,
-deterministic animation,
+It does not complete serializable event timelines,
+discrete variation,
+derived animation artifacts,
 headless CI capture,
 or final legacy migration.
