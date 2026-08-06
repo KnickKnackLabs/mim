@@ -34,7 +34,7 @@ describe("live capture command", () => {
     const requested: Request[] = [];
     const metadata = {
       output: resolve("frame.png"),
-      schemaVersion: 1,
+      schemaVersion: 2,
     };
     const result = await requestLiveCapture(
       parseCaptureArguments([
@@ -63,7 +63,7 @@ describe("live capture command", () => {
       args,
       async () => Response.json({
         output: resolve("other.png"),
-        schemaVersion: 1,
+        schemaVersion: 2,
       }),
     )).rejects.toThrow("invalid capture metadata");
   });

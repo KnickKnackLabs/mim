@@ -398,6 +398,35 @@ kbd {
   font-size: 0.62rem;
 }
 
+.timeline-controls {
+  position: absolute;
+  z-index: 3;
+  bottom: 2.2rem;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.6rem;
+  transform: translateX(-50%);
+  color: #9cc7dc;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.7rem;
+  border: 1px solid rgba(186, 230, 253, 0.2);
+  border-radius: 0.65rem;
+  background: rgba(7, 24, 39, 0.72);
+  backdrop-filter: blur(12px);
+}
+
+.timeline-controls button {
+  padding: 0.25rem 0.45rem;
+  font-size: 0.68rem;
+}
+
+.timeline-controls code {
+  min-width: 4.8ch;
+  color: #dff4ff;
+}
+
 .camera-readout,
 .readout {
   position: absolute;

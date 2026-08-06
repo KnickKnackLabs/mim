@@ -18,9 +18,11 @@ const browser: BrowserCaptureMetadata = {
   cssWidth: 1,
   devicePixelRatio: 1,
   locale: "en-US",
+  parameters: { p: 31, phase: 2.5 },
   pixelHeight: 1,
   pixelWidth: 1,
   revision: 4,
+  timelineElapsedSeconds: 2.5,
   userAgent: "mim test browser",
   viewX: 3,
   viewY: -2,
@@ -57,6 +59,9 @@ describe("capture artifacts", () => {
     expect(metadata.browser).toEqual(browser);
     expect(metadata.png.bytes).toBe(image.byteLength);
     expect(metadata.png.sha256).toHaveLength(64);
+    expect(metadata.schemaVersion).toBe(2);
+    expect(metadata.browser.timelineElapsedSeconds).toBe(2.5);
+    expect(metadata.browser.parameters).toEqual({ p: 31, phase: 2.5 });
     expect(metadata.source.sha256).toHaveLength(64);
     expect(JSON.parse(await readFile(`${output}.json`, "utf8"))).toEqual(metadata);
   });
@@ -66,6 +71,8 @@ describe("capture artifacts", () => {
     expect(parseBrowserCaptureMetadata({ ...browser, pixelWidth: 0 })).toBeNull();
     expect(parseBrowserCaptureMetadata({ ...browser, pixelWidth: 2 })).toBeNull();
     expect(parseBrowserCaptureMetadata({ ...browser, devicePixelRatio: 100 })).toBeNull();
+    expect(parseBrowserCaptureMetadata({ ...browser, timelineElapsedSeconds: -1 })).toBeNull();
+    expect(parseBrowserCaptureMetadata({ ...browser, parameters: { phase: Infinity } })).toBeNull();
     expect(validatePng(onePixelPng())).toEqual({ height: 1, width: 1 });
     expect(() => validatePng(new Uint8Array([1, 2, 3]))).toThrow("not a PNG");
     expect(() => validatePng(onePixelPng().slice(0, -1))).toThrow("truncated");

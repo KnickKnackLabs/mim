@@ -70,7 +70,7 @@ export async function requestLiveCapture(
     !body
     || typeof body !== "object"
     || (body as { output?: unknown }).output !== args.output
-    || (body as { schemaVersion?: unknown }).schemaVersion !== 1
+    || (body as { schemaVersion?: unknown }).schemaVersion !== 2
   ) {
     throw new Error("watch server returned invalid capture metadata");
   }
