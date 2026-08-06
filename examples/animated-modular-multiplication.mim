@@ -1,4 +1,4 @@
-# Native animation — Modular multiplication
+# Modular multiplication
 # A moving multiplication table wraps every value around the prime 31.
 
 :mim 1

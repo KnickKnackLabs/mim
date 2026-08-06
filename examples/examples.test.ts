@@ -11,8 +11,9 @@ const exampleNames = readdirSync(import.meta.dir)
   .sort();
 
 describe("annotated example programs", () => {
-  test("keeps the curated teaching library visible", () => {
-    expect(exampleNames).toEqual(EXAMPLE_FILES);
+  test("keeps the curated teaching library visible in intentional display order", () => {
+    expect([...EXAMPLE_FILES].sort()).toEqual(exampleNames);
+    expect(EXAMPLE_FILES[0]).toBe("animated-cubic-quadratic-residues.mim");
   });
 
   for (const name of exampleNames) {
@@ -26,6 +27,7 @@ describe("annotated example programs", () => {
       expect(loaded.diagnostics).toEqual([]);
       expect(loaded.ok).toBe(true);
       expect(metadata.title.length).toBeGreaterThan(0);
+      expect(metadata.title).not.toMatch(/^(Animated|Native animation\b)/);
       expect(metadata.description.length).toBeGreaterThan(0);
       expect(lines.filter((line) => line.startsWith("# ")).length).toBeGreaterThanOrEqual(4);
       expect(lines.slice(firstStatement + 1).some((line) => line.startsWith("# "))).toBe(true);

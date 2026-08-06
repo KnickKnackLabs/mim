@@ -9,7 +9,7 @@ Modular source. One portable HTML artifact.
 ![UI: Svelte](https://img.shields.io/badge/UI-Svelte-ff3e00?style=flat)
 ![core: TypeScript](https://img.shields.io/badge/core-TypeScript-3178c6?style=flat)
 ![renderer: Canvas 2D](https://img.shields.io/badge/renderer-Canvas%202D-175e7a?style=flat)
-![unit suites: 62](https://img.shields.io/badge/unit%20suites-62-brightgreen?style=flat)
+![unit suites: 63](https://img.shields.io/badge/unit%20suites-63-brightgreen?style=flat)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue?style=flat)](LICENSE)
 
 </div>
@@ -51,18 +51,18 @@ mise run mim
 
 Each program introduces one visual idea and keeps its explanation beside the statements it clarifies. The standalone browser bundles the complete library: use `Examples` or `:example <name>` to load full annotated source, or open a file through `mim:watch` with an ordinary text editor. Programs with `:vary` expose play, restart, and bounded-speed controls.
 
-| Program                                          | What it shows                                                                                                          |
-| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
-| `examples/animated-cubic-quadratic-residues.mim` | **Native animation — Cubic and quadratic residues**. A moving cubic x term crosses a quadratic y field modulo 31.      |
-| `examples/animated-hyperbolic-residues.mim`      | **Native animation — Hyperbolic residues**. Difference-of-squares contours flow through a modular period.              |
-| `examples/animated-modular-multiplication.mim`   | **Native animation — Modular multiplication**. A moving multiplication table wraps every value around the prime 31.    |
-| `examples/animated-radial-residues-31.mim`       | **Animated radial residues modulo 31**. A native variation moves the radial field through one seamless modular period. |
-| `examples/animated-two-axis-orbit.mim`           | **Native animation — Two-axis orbit**. Two independent clocks move a radial field along a changing path.               |
-| `examples/dyadic-lcm-depth.mim`                  | **Dyadic LCM depth**. Powers of two become a nested plaid of divisibility bands.                                       |
-| `examples/gcd-lattice.mim`                       | **GCD lattice**. Common divisors form symmetric bands across the signed integer grid.                                  |
-| `examples/prime-stripped-lcm.mim`                | **Prime-stripped LCM**. Remove one chosen prime's complete contribution from an LCM field.                             |
-| `examples/radial-residues-31.mim`                | **Radial residues modulo 31**. Squared distance folded by a prime forms repeating targets and curved bands.            |
-| `examples/xor-interference.mim`                  | **XOR interference**. Binary differences produce nested diamonds, bands, and checker textures.                         |
+| Program                                          | What it shows                                                                                                      |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| `examples/animated-cubic-quadratic-residues.mim` | **Cubic and quadratic residue waves**. A moving target reveals finite-field level sets hidden inside x³ + y².      |
+| `examples/animated-radial-residues-31.mim`       | **Radial residue drift modulo 31**. A native variation moves the radial field through one seamless modular period. |
+| `examples/animated-two-axis-orbit.mim`           | **Two-axis orbit**. Two independent clocks move a radial field along a changing path.                              |
+| `examples/animated-hyperbolic-residues.mim`      | **Hyperbolic residues**. Difference-of-squares contours flow through a modular period.                             |
+| `examples/animated-modular-multiplication.mim`   | **Modular multiplication**. A moving multiplication table wraps every value around the prime 31.                   |
+| `examples/radial-residues-31.mim`                | **Radial residues modulo 31**. Squared distance folded by a prime forms repeating targets and curved bands.        |
+| `examples/gcd-lattice.mim`                       | **GCD lattice**. Common divisors form symmetric bands across the signed integer grid.                              |
+| `examples/dyadic-lcm-depth.mim`                  | **Dyadic LCM depth**. Powers of two become a nested plaid of divisibility bands.                                   |
+| `examples/prime-stripped-lcm.mim`                | **Prime-stripped LCM**. Remove one chosen prime's complete contribution from an LCM field.                         |
+| `examples/xor-interference.mim`                  | **XOR interference**. Binary differences produce nested diamonds, bands, and checker textures.                     |
 
 ## Static site
 

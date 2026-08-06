@@ -16,6 +16,7 @@
   } from "./browser/watch-capture";
   import { formatBrowserProgram } from "./browser/format-browser-program";
   import { loadBrowserProgram } from "./browser/load-browser-program";
+  import { programDirectivePreview } from "./browser/program-preview";
   import { updateBrowserProgram } from "./browser/update-browser-program";
   import {
     connectWatchClient,
@@ -439,7 +440,7 @@
           class:watch-error={watchStatus === "disconnected"}
           role="status"
         >{watchStatus} · revision {browserWatch.revision}</span>
-        <code>{browserWatch.source.trim().replaceAll("\n", " · ") || "waiting for source"}</code>
+        <code>{programDirectivePreview(browserWatch.source) || "waiting for source"}</code>
         {#if browserWatch.revision === 0}
           <span>waiting for the watched file</span>
         {:else if browserWatch.accepted}
@@ -458,7 +459,7 @@
       {:else}
         <span>{selectedExample?.description ?? "LCM → strip prime 31 → exact color"}</span>
         {#if exampleError}<span class="watch-error" role="alert">{exampleError}</span>{/if}
-        <code>{browserProgram?.source.trim().replaceAll("\n", " · ")}</code>
+        <code>{programDirectivePreview(browserProgram?.source ?? "")}</code>
         <span>press <kbd>:</kbd> to edit · <code>:example</code> to browse · append <code>#legacy</code> for the merged renderer</span>
       {/if}
     </aside>
