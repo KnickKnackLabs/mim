@@ -1,0 +1,18 @@
+# XOR interference
+# Binary differences produce nested diamonds, bands, and checker textures.
+
+:mim 1
+
+# Absolute coordinates mirror one binary pattern into four quadrants.
+:axis x integers
+:axis y integers
+
+# XOR marks every bit position where the coordinate magnitudes differ.
+:field xor(abs(x), abs(y))
+
+# Exact coloring keeps distinct XOR results visually distinct.
+:lens value
+:color exact(lens)
+
+# The interference structure already supplies its own diagonals.
+:overlay equality off

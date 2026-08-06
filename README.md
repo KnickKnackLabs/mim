@@ -9,7 +9,7 @@ Modular source. One portable HTML artifact.
 ![UI: Svelte](https://img.shields.io/badge/UI-Svelte-ff3e00?style=flat)
 ![core: TypeScript](https://img.shields.io/badge/core-TypeScript-3178c6?style=flat)
 ![renderer: Canvas 2D](https://img.shields.io/badge/renderer-Canvas%202D-175e7a?style=flat)
-![unit suites: 49](https://img.shields.io/badge/unit%20suites-49-brightgreen?style=flat)
+![unit suites: 52](https://img.shields.io/badge/unit%20suites-52-brightgreen?style=flat)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue?style=flat)](LICENSE)
 
 </div>
@@ -33,12 +33,27 @@ mise run mim:dev
 # Watch one program in a persistent browser.
 mise run mim:watch experiment.mim --open
 
+# Explore a curated annotated program.
+mise run mim:watch examples/radial-residues-31.mim --open
+
 # Capture the current canvas from that live browser.
 mise run mim:capture http://127.0.0.1:4312/?watch=1 /tmp/mim.png
 
 # Build and open the portable artifact.
 mise run mim
 ```
+
+## Annotated examples
+
+Each program introduces one visual idea and keeps its explanation beside the statements it clarifies. Open any file through `mim:watch` and edit it with an ordinary text editor.
+
+| Program                           | What it shows                                                                                               |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `examples/dyadic-lcm-depth.mim`   | **Dyadic LCM depth**. Powers of two become a nested plaid of divisibility bands.                            |
+| `examples/gcd-lattice.mim`        | **GCD lattice**. Common divisors form symmetric bands across the signed integer grid.                       |
+| `examples/prime-stripped-lcm.mim` | **Prime-stripped LCM**. Remove one chosen prime's complete contribution from an LCM field.                  |
+| `examples/radial-residues-31.mim` | **Radial residues modulo 31**. Squared distance folded by a prime forms repeating targets and curved bands. |
+| `examples/xor-interference.mim`   | **XOR interference**. Binary differences produce nested diamonds, bands, and checker textures.              |
 
 ## Architecture
 
@@ -50,6 +65,7 @@ mise run mim
 | `src/render`      | Canvas pixels from prepared display data                                    |
 | `src/ui`          | Svelte controls and Canvas host                                             |
 | `src/watch`       | File observation, live capture, and loopback transport                      |
+| `examples`        | Curated annotated programs and their owner-level validation                 |
 | `scripts`         | CLI lifecycle, standalone build, capture requests, and aggregate validation |
 
 ## Tasks
