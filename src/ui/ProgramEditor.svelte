@@ -5,6 +5,7 @@
   import { exampleCommandDraft } from "../browser/example-command";
   import type { BrowserProgramFormatResult } from "../browser/format-browser-program";
   import {
+    hasUnappliedProgramDraft,
     programEditorInputAction,
     programEditorWindowAction,
   } from "./program-editor-keys";
@@ -56,7 +57,7 @@
   }
 
   export function hasUnappliedDraft(): boolean {
-    return !readOnly && visible && draft !== source;
+    return hasUnappliedProgramDraft(draft, source, readOnly);
   }
 
   function cancelPending(): void {

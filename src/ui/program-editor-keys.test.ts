@@ -1,11 +1,18 @@
 import { describe, expect, test } from "bun:test";
 
 import {
+  hasUnappliedProgramDraft,
   programEditorInputAction,
   programEditorWindowAction,
 } from "./program-editor-keys";
 
 describe("program editor keyboard actions", () => {
+  test("protects unapplied drafts even while the editor is closed", () => {
+    expect(hasUnappliedProgramDraft(":mim 1", "full source", false)).toBe(true);
+    expect(hasUnappliedProgramDraft("full source", "full source", false)).toBe(false);
+    expect(hasUnappliedProgramDraft(":mim 1", "full source", true)).toBe(false);
+  });
+
   test("opens from colon outside editable controls", () => {
     expect(programEditorWindowAction({
       defaultPrevented: false,
