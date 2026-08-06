@@ -9,7 +9,7 @@ Modular source. One portable HTML artifact.
 ![UI: Svelte](https://img.shields.io/badge/UI-Svelte-ff3e00?style=flat)
 ![core: TypeScript](https://img.shields.io/badge/core-TypeScript-3178c6?style=flat)
 ![renderer: Canvas 2D](https://img.shields.io/badge/renderer-Canvas%202D-175e7a?style=flat)
-![unit suites: 61](https://img.shields.io/badge/unit%20suites-61-brightgreen?style=flat)
+![unit suites: 62](https://img.shields.io/badge/unit%20suites-62-brightgreen?style=flat)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue?style=flat)](LICENSE)
 
 </div>
@@ -60,6 +60,10 @@ Each program introduces one visual idea and keeps its explanation beside the sta
 | `examples/radial-residues-31.mim`          | **Radial residues modulo 31**. Squared distance folded by a prime forms repeating targets and curved bands.            |
 | `examples/xor-interference.mim`            | **XOR interference**. Binary differences produce nested diamonds, bands, and checker textures.                         |
 
+## Static site
+
+The standalone artifact includes the editor, annotated example library, and native variation playback without a server. Build the GitHub Pages entry point with `mise run mim:pages:build`; it publishes the validated standalone bytes as `dist/index.html`. File watching and server-assisted capture remain local development tools.
+
 ## Architecture
 
 | Owner                | Responsibility                                                              |
@@ -82,16 +86,17 @@ Each program introduces one visual idea and keeps its explanation beside the sta
 
 ## Tasks
 
-| Task                   | Description                                                |
-| ---------------------- | ---------------------------------------------------------- |
-| `mise run bats`        | Run BATS task-boundary tests                               |
-| `mise run doctor`      | Check local development setup                              |
-| `mise run mim`         | Build and open the standalone mim instrument               |
-| `mise run mim:build`   | Build the standalone mim HTML artifact                     |
-| `mise run mim:capture` | Capture the current canvas from one live mim watch session |
-| `mise run mim:dev`     | Run the mim development server                             |
-| `mise run mim:watch`   | Watch one .mim program in a persistent browser             |
-| `mise run test`        | Run the complete mim validation path                       |
+| Task                       | Description                                                |
+| -------------------------- | ---------------------------------------------------------- |
+| `mise run bats`            | Run BATS task-boundary tests                               |
+| `mise run doctor`          | Check local development setup                              |
+| `mise run mim`             | Build and open the standalone mim instrument               |
+| `mise run mim:build`       | Build the standalone mim HTML artifact                     |
+| `mise run mim:capture`     | Capture the current canvas from one live mim watch session |
+| `mise run mim:dev`         | Run the mim development server                             |
+| `mise run mim:pages:build` | Build the static GitHub Pages artifact                     |
+| `mise run mim:watch`       | Watch one .mim program in a persistent browser             |
+| `mise run test`            | Run the complete mim validation path                       |
 
 ## Validation
 

@@ -140,6 +140,12 @@ mise run mim`}</CodeBlock>
       </Table>
     </Section>
 
+    <Section title="Static site">
+      <Paragraph>
+        {"The standalone artifact includes the editor, annotated example library, and native variation playback without a server. Build the GitHub Pages entry point with "}<Code>mise run mim:pages:build</Code>{"; it publishes the validated standalone bytes as "}<Code>dist/index.html</Code>{". File watching and server-assisted capture remain local development tools."}
+      </Paragraph>
+    </Section>
+
     <Section title="Architecture">
       <Table>
         <TableHead><Cell>Owner</Cell><Cell>Responsibility</Cell></TableHead>

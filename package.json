@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "bun run scripts/build.ts",
+    "build:pages": "bun run scripts/build-pages.ts",
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "check:artifact": "bun run scripts/check-artifact.ts",
     "test": "bun run scripts/test.ts",
