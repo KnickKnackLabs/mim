@@ -51,8 +51,11 @@ mise run mim
 
 Each program introduces one visual idea and keeps its explanation beside the statements it clarifies. Open any file through `mim:watch` and edit it with an ordinary text editor. Programs with `:vary` expose play, restart, and bounded-speed controls.
 
+Continuous tracks use `:vary phase from 0 to 31 over 8s loop`. Discrete tracks use explicit values or finite inclusive generators, such as `:vary p through primes(2, 31) every 500ms pingpong`. Available generators are `integers`, `evens`, and `primes`.
+
 | Program                                    | What it shows                                                                                                          |
 | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| `examples/animated-prime-stripped-lcm.mim` | **Animated prime-stripped LCM**. A discrete prime track reveals how each prime organizes the LCM lattice.              |
 | `examples/animated-radial-residues-31.mim` | **Animated radial residues modulo 31**. A native variation moves the radial field through one seamless modular period. |
 | `examples/dyadic-lcm-depth.mim`            | **Dyadic LCM depth**. Powers of two become a nested plaid of divisibility bands.                                       |
 | `examples/gcd-lattice.mim`                 | **GCD lattice**. Common divisors form symmetric bands across the signed integer grid.                                  |

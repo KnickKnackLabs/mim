@@ -129,6 +129,9 @@ mise run mim`}</CodeBlock>
       <Paragraph>
         {"Each program introduces one visual idea and keeps its explanation beside the statements it clarifies. Open any file through "}<Code>mim:watch</Code>{" and edit it with an ordinary text editor. Programs with "}<Code>:vary</Code>{" expose play, restart, and bounded-speed controls."}
       </Paragraph>
+      <Paragraph>
+        {"Continuous tracks use "}<Code>:vary phase from 0 to 31 over 8s loop</Code>{". Discrete tracks use explicit values or finite inclusive generators, such as "}<Code>:vary p through primes(2, 31) every 500ms pingpong</Code>{". Available generators are "}<Code>integers</Code>{", "}<Code>evens</Code>{", and "}<Code>primes</Code>{"."}
+      </Paragraph>
       <Table>
         <TableHead><Cell>Program</Cell><Cell>What it shows</Cell></TableHead>
         {annotatedExamples.map((example) => (

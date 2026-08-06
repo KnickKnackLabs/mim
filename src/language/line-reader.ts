@@ -43,6 +43,26 @@ export class LineReader {
     return Number(value);
   }
 
+  nextIsNumber(): boolean {
+    this.skipSpace();
+    return /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)/.test(this.text.slice(this.index));
+  }
+
+  consume(value: string): boolean {
+    this.skipSpace();
+    if (!this.text.startsWith(value, this.index)) return false;
+    this.index += value.length;
+    return true;
+  }
+
+  durationSeconds(description: string): number {
+    const amount = this.number(description);
+    const unit = this.identifier("duration unit");
+    if (unit === "s") return amount;
+    if (unit === "ms") return amount / 1_000;
+    this.fail(`expected duration unit "s" or "ms"`);
+  }
+
   keyword(expected: string): void {
     const actual = this.identifier(JSON.stringify(expected));
     if (actual !== expected) this.fail(`expected ${JSON.stringify(expected)}`);

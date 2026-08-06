@@ -4,6 +4,7 @@ import type { VariationPlan } from "../program";
 import {
   createTimelineState,
   timelineElapsedSeconds,
+  timelineFrameAt,
 } from "../timeline";
 import {
   pauseTimelineForCapture,
@@ -14,6 +15,7 @@ import {
 const variation: VariationPlan = {
   durationSeconds: 8,
   from: 0,
+  kind: "linear",
   mode: "loop",
   parameter: "phase",
   span: {
@@ -41,6 +43,24 @@ describe("browser program timeline", () => {
 
     const resumed = resumeTimelineAfterCapture(paused.state, paused.resume, 8_000);
     expect(timelineElapsedSeconds(resumed, 9_000)).toBe(3);
+  });
+
+  test("freezes the exact discrete value for capture metadata", () => {
+    const discrete: VariationPlan = {
+      everySeconds: 0.5,
+      kind: "discrete",
+      mode: "loop",
+      parameter: "p",
+      span: variation.span,
+      values: [2, 3, 5, 7],
+    };
+    const paused = pauseTimelineForCapture(
+      [discrete],
+      createTimelineState(1_000),
+      2_250,
+    );
+    expect(paused.elapsedSeconds).toBe(1.25);
+    expect(timelineFrameAt([discrete], paused.state, 8_000).overrides).toEqual({ p: 5 });
   });
 
   test("does not invent playback for a static program", () => {
