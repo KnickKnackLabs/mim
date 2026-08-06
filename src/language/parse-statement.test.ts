@@ -31,20 +31,20 @@ describe("parseStatement", () => {
       to: 31,
     }],
     [":vary p through 2, 3, 5, 7 every 500ms pingpong", {
-      everySeconds: 0.5,
       form: "discrete",
       kind: "variation",
       mode: "pingpong",
       parameter: "p",
       sequence: { kind: "explicit", values: [2, 3, 5, 7] },
+      timing: { kind: "every", seconds: 0.5 },
     }],
-    [":vary n through integers(-2, 2) every 1s loop", {
-      everySeconds: 1,
+    [":vary n through integers(-2, 2) over 10s loop", {
       form: "discrete",
       kind: "variation",
       mode: "loop",
       parameter: "n",
       sequence: { from: -2, generator: "integers", kind: "generated", to: 2 },
+      timing: { kind: "over", seconds: 10 },
     }],
     [":field lcm(x, y)", { expression: { callee: "lcm" }, kind: "field" }],
     [":lens strip(value, p)", { expression: { callee: "strip" }, kind: "lens" }],

@@ -111,11 +111,11 @@ export function validateVariations(
       continue;
     }
 
-    if (!isValidDuration(statement.everySeconds)) {
+    if (!isValidDuration(statement.timing.seconds)) {
       pushInvalid(
         diagnostics,
         statement,
-        `variation step duration for ${statement.parameter} must be positive and finite`,
+        `variation ${statement.timing.kind === "every" ? "step" : "total"} duration for ${statement.parameter} must be positive and finite`,
       );
       continue;
     }
@@ -125,15 +125,6 @@ export function validateVariations(
       continue;
     }
     const values = expanded.values.map((value) => Object.is(value, -0) ? 0 : value);
-    const completionSeconds = (values.length - 1) * statement.everySeconds;
-    if (!isSafeNumber(completionSeconds)) {
-      pushInvalid(
-        diagnostics,
-        statement,
-        `variation timeline for ${statement.parameter} exceeds the safe duration`,
-      );
-      continue;
-    }
     if (values.some((value) => !isSafeNumber(value))) {
       pushInvalid(
         diagnostics,
@@ -167,8 +158,29 @@ export function validateVariations(
       continue;
     }
 
+    const everySeconds = statement.timing.kind === "every"
+      ? statement.timing.seconds
+      : statement.timing.seconds / (mode === "loop" ? values.length : values.length - 1);
+    if (!isValidDuration(everySeconds)) {
+      pushInvalid(
+        diagnostics,
+        statement,
+        `variation timing for ${statement.parameter} is too small to represent`,
+      );
+      continue;
+    }
+    const completionSeconds = (values.length - 1) * everySeconds;
+    if (!isSafeNumber(completionSeconds)) {
+      pushInvalid(
+        diagnostics,
+        statement,
+        `variation timeline for ${statement.parameter} exceeds the safe duration`,
+      );
+      continue;
+    }
+
     variations.push({
-      everySeconds: statement.everySeconds,
+      everySeconds,
       kind: "discrete",
       mode,
       parameter: statement.parameter,

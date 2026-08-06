@@ -50,6 +50,17 @@ describe("program variation validation", () => {
   });
 
   test.each([
+    ["loop", 2.5],
+    ["once", 10 / 3],
+    ["pingpong", 10 / 3],
+  ])("distributes total duration across %s values", (mode, everySeconds) => {
+    expect(variation(
+      `:vary q through 2, 3, 5, 7 over 10s ${mode}`,
+      ":param q prime = 2",
+    )).toEqual(expect.objectContaining({ everySeconds, mode }));
+  });
+
+  test.each([
     ["integers(-2, 2)", ":param phase number = -2", [-2, -1, 0, 1, 2]],
     ["integers(2, -2)", ":param phase number = 2", [2, 1, 0, -1, -2]],
     ["evens(2, 8)", ":param phase number = 2", [2, 4, 6, 8]],

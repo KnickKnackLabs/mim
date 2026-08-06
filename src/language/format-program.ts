@@ -22,7 +22,7 @@ function formatStatement(statement: ProgramStatement): string {
     if (statement.form === "linear") {
       return `:vary ${statement.parameter} from ${statement.from} to ${statement.to} over ${formatDuration(statement.durationSeconds)} ${statement.mode}`;
     }
-    return `:vary ${statement.parameter} through ${formatVariationSequence(statement.sequence)} every ${formatDuration(statement.everySeconds)} ${statement.mode}`;
+    return `:vary ${statement.parameter} through ${formatVariationSequence(statement.sequence)} ${statement.timing.kind} ${formatDuration(statement.timing.seconds)} ${statement.mode}`;
   }
   if (statement.kind === "axis") {
     return `:axis ${statement.axis} ${formatExpression(statement.definition)}`;

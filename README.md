@@ -51,7 +51,7 @@ mise run mim
 
 Each program introduces one visual idea and keeps its explanation beside the statements it clarifies. Open any file through `mim:watch` and edit it with an ordinary text editor. Programs with `:vary` expose play, restart, and bounded-speed controls.
 
-Continuous tracks use `:vary phase from 0 to 31 over 8s loop`. Discrete tracks use explicit values or finite inclusive generators, such as `:vary p through primes(2, 31) every 500ms pingpong`. Available generators are `integers`, `evens`, and `primes`.
+Continuous tracks use `:vary phase from 0 to 31 over 8s loop`. Discrete tracks use explicit values or finite inclusive generators. Choose per-value timing with `every`, or total timing with `:vary p through primes(2, 71) over 10s loop`. For `loop`, `over` covers one complete cycle. For `once` and `pingpong`, it covers the first-to-last traversal; the pingpong return takes the same time. Available generators are `integers`, `evens`, and `primes`.
 
 | Program                                    | What it shows                                                                                                          |
 | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
