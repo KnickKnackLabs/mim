@@ -47,15 +47,22 @@ describe("validated program cell evaluation", () => {
     });
   });
 
-  test("uses validated parameter overrides", () => {
+  test("uses validated prime and number parameter overrides", () => {
+    const source = replaceRuntimeLine(
+      ":param",
+      ":param p prime = 31\n:param phase number = 0",
+    )
+      .replace(":field lcm(x, y)", ":field x + phase")
+      .replace(":lens strip(value, p)", ":lens value");
     const result = evaluateCell(
-      validatedProgram(),
+      validatedProgram(source),
       { x: 62, xi: 4, y: 31, yi: 11 },
-      { p: 2 },
+      { p: 2, phase: 0.5 },
     );
-    expect(result.kind === "evaluated" ? result.cell.lens : null).toEqual({
-      kind: "number",
-      value: 31,
+    expect(result.kind === "evaluated" ? result.cell : null).toMatchObject({
+      field: { kind: "number", value: 62.5 },
+      lens: { kind: "number", value: 62.5 },
+      parameters: { p: 2, phase: 0.5 },
     });
   });
 

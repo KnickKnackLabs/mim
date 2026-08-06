@@ -20,10 +20,10 @@ export function bindParameters(
   const values: Record<string, number> = {};
   for (const parameter of program.parameters) {
     const value = overrides[parameter.name] ?? parameter.initialValue;
-    if (!Number.isSafeInteger(value)) {
+    if (!Number.isFinite(value) || Math.abs(value) > Number.MAX_SAFE_INTEGER) {
       diagnostics.push({
         code: "invalid-parameter-value",
-        message: `${parameter.name} must be a safe integer`,
+        message: `${parameter.name} must be within the safe numeric range`,
         parameter: parameter.name,
       });
     } else if (parameter.kind === "prime" && !isPrimeInteger(value)) {
@@ -33,7 +33,7 @@ export function bindParameters(
         parameter: parameter.name,
       });
     } else {
-      values[parameter.name] = value;
+      values[parameter.name] = Object.is(value, -0) ? 0 : value;
     }
   }
 

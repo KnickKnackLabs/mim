@@ -3,9 +3,11 @@ import type { ValidatedProgram } from "./types";
 
 export type ProgramValidationCode =
   | "duplicate-axis"
+  | "duplicate-variation"
   | "duplicate-parameter"
   | "duplicate-statement"
   | "invalid-axis"
+  | "invalid-variation"
   | "invalid-overlay"
   | "invalid-parameter"
   | "missing-axis"

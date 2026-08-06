@@ -23,6 +23,15 @@ export interface AxisStatement extends StatementBase {
   kind: "axis";
 }
 
+export interface VariationStatement extends StatementBase {
+  durationSeconds: number;
+  from: number;
+  kind: "variation";
+  mode: string;
+  parameter: string;
+  to: number;
+}
+
 export interface FieldStatement extends StatementBase {
   expression: Expression;
   kind: "field";
@@ -47,6 +56,7 @@ export interface OverlayStatement extends StatementBase {
 export type ProgramStatement =
   | AxisStatement
   | ColorStatement
+  | VariationStatement
   | FieldStatement
   | LensStatement
   | MimVersionStatement

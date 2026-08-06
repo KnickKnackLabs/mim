@@ -34,6 +34,20 @@ export class LineReader {
     return Number(value);
   }
 
+  number(description: string): number {
+    this.skipSpace();
+    const value = this.text.slice(this.index)
+      .match(/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)/)?.[0];
+    if (!value) this.fail(`expected ${description}`);
+    this.index += value.length;
+    return Number(value);
+  }
+
+  keyword(expected: string): void {
+    const actual = this.identifier(JSON.stringify(expected));
+    if (actual !== expected) this.fail(`expected ${JSON.stringify(expected)}`);
+  }
+
   expect(value: string): void {
     this.skipSpace();
     if (!this.text.startsWith(value, this.index)) {

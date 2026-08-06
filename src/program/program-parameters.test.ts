@@ -34,6 +34,28 @@ describe("program parameter validation", () => {
     expect(codes(source)).toContain("invalid-parameter");
   });
 
+  test("accepts finite literal number parameters", () => {
+    const source = PROVING_PROGRAM
+      .replace(":param p prime = 31\n", ":param p prime = 31\n:param phase number = -0.5\n")
+      .replace(":field lcm(x, y)", ":field lcm(x, y) + phase");
+    const result = validateProgram(parseAst(source));
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.program.parameters).toContainEqual(expect.objectContaining({
+      initialValue: -0.5,
+      kind: "number",
+      name: "phase",
+    }));
+  });
+
+  test("rejects expression-valued number initial values", () => {
+    const source = PROVING_PROGRAM.replace(
+      ":param p prime = 31",
+      ":param p prime = 31\n:param phase number = 1 / 2",
+    );
+    expect(codes(source)).toContain("invalid-parameter");
+  });
+
   test("makes valid parameters available to lens expressions", () => {
     const result = validateProgram(parseAst(PROVING_PROGRAM));
     expect(result.ok).toBe(true);

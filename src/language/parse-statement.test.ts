@@ -21,6 +21,14 @@ describe("parseStatement", () => {
       definition: { callee: "primes", kind: "call" },
       kind: "axis",
     }],
+    [":vary phase from -0.5 to 31 over 8.25s pingpong", {
+      durationSeconds: 8.25,
+      from: -0.5,
+      kind: "variation",
+      mode: "pingpong",
+      parameter: "phase",
+      to: 31,
+    }],
     [":field lcm(x, y)", { expression: { callee: "lcm" }, kind: "field" }],
     [":lens strip(value, p)", { expression: { callee: "strip" }, kind: "lens" }],
     [":color exact(lens)", { expression: { callee: "exact" }, kind: "color" }],
@@ -59,6 +67,7 @@ describe("parseStatement", () => {
     [":param p prime 31", 16],
     [":param p prime =", 17],
     [":axis x", 8],
+    [":vary phase from 0 to 31 over loop", 31],
     [":field", 7],
     [":overlay equality", 18],
   ])("rejects malformed statement %p", (source, column) => {

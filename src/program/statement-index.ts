@@ -1,6 +1,7 @@
 import type {
   AxisStatement,
   ColorStatement,
+  VariationStatement,
   FieldStatement,
   LensStatement,
   OverlayStatement,
@@ -11,6 +12,7 @@ import type {
 export interface StatementIndex {
   axes: AxisStatement[];
   colors: ColorStatement[];
+  variations: VariationStatement[];
   fields: FieldStatement[];
   lenses: LensStatement[];
   overlays: OverlayStatement[];
@@ -20,6 +22,7 @@ export interface StatementIndex {
 export function indexStatements(ast: ProgramAst): StatementIndex {
   const axes: AxisStatement[] = [];
   const colors: ColorStatement[] = [];
+  const variations: VariationStatement[] = [];
   const fields: FieldStatement[] = [];
   const lenses: LensStatement[] = [];
   const overlays: OverlayStatement[] = [];
@@ -28,11 +31,12 @@ export function indexStatements(ast: ProgramAst): StatementIndex {
   for (const statement of ast.statements) {
     if (statement.kind === "axis") axes.push(statement);
     if (statement.kind === "color") colors.push(statement);
+    if (statement.kind === "variation") variations.push(statement);
     if (statement.kind === "field") fields.push(statement);
     if (statement.kind === "lens") lenses.push(statement);
     if (statement.kind === "overlay") overlays.push(statement);
     if (statement.kind === "parameter") parameters.push(statement);
   }
 
-  return { axes, colors, fields, lenses, overlays, parameters };
+  return { axes, colors, fields, lenses, overlays, parameters, variations };
 }
