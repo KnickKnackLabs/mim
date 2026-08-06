@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { formatProgram } from "./format-program";
+import { formatProgram, formatProgramSource } from "./format-program";
 import { parseProgram } from "./parse-program";
 
 function parsed(source: string) {
@@ -34,6 +34,28 @@ describe("formatProgram", () => {
 
     expect(formatProgram(parsed(source))).toBe(canonical);
     expect(formatProgram(parsed(canonical))).toBe(canonical);
+  });
+
+  test("preserves whole-line and inline comments while canonicalizing source", () => {
+    const source = `
+      # Radial residues.
+      :mim    1
+
+      # Squared distance folded into a finite field.
+      :field mod(x*x+y*y,31) # Prime modulus.
+    `;
+    const canonical = [
+      "# Radial residues.",
+      ":mim 1",
+      "",
+      "# Squared distance folded into a finite field.",
+      ":field mod(x * x + y * y, 31) # Prime modulus.",
+      "",
+    ].join("\n");
+
+    const formatted = formatProgramSource(source, parsed(source));
+    expect(formatted).toBe(canonical);
+    expect(formatProgramSource(formatted, parsed(formatted))).toBe(canonical);
   });
 
   test("preserves expression precedence", () => {

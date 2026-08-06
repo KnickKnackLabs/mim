@@ -28,3 +28,35 @@ function formatStatement(statement: ProgramStatement): string {
 export function formatProgram(program: ProgramAst): string {
   return `${program.statements.map(formatStatement).join("\n")}\n`;
 }
+
+function lineComment(line: string): string | null {
+  const start = line.indexOf("#");
+  return start === -1 ? null : line.slice(start).trimEnd();
+}
+
+function trimOuterBlankLines(lines: string[]): string[] {
+  let start = 0;
+  let end = lines.length;
+  while (start < end && lines[start] === "") start += 1;
+  while (end > start && lines[end - 1] === "") end -= 1;
+  return lines.slice(start, end);
+}
+
+export function formatProgramSource(source: string, program: ProgramAst): string {
+  const statementsByLine = new Map(
+    program.statements.map((statement) => [statement.span.start.line, statement]),
+  );
+  const lines = source.split("\n").map((rawLine, index) => {
+    const line = rawLine.replace(/\r$/, "");
+    const statement = statementsByLine.get(index + 1);
+    const comment = lineComment(line);
+    if (statement) {
+      const formatted = formatStatement(statement);
+      return comment ? `${formatted} ${comment}` : formatted;
+    }
+    if (comment) return comment;
+    return "";
+  });
+
+  return `${trimOuterBlankLines(lines).join("\n")}\n`;
+}

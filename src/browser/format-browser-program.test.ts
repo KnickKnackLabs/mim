@@ -22,6 +22,24 @@ describe("browser program formatting", () => {
     expect(result.source.endsWith("\n")).toBe(true);
   });
 
+  test("keeps annotations beside the source they explain", () => {
+    const source = `# Instrument summary.
+:mim 1
+
+# Explain the field here.
+:field gcd(x,y) # Inline detail.
+`;
+    const result = formatBrowserProgram(source);
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("expected formatting to succeed");
+    expect(result.source).toBe(`# Instrument summary.
+:mim 1
+
+# Explain the field here.
+:field gcd(x, y) # Inline detail.
+`);
+  });
+
   test("returns syntax diagnostics without replacement source", () => {
     const result = formatBrowserProgram(":mim 1\n:field (\n");
     expect(result.ok).toBe(false);
