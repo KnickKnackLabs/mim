@@ -35,6 +35,8 @@
   export let visibleExtent: VisibleGridExtent = visibleGridExtent(1, 1, 1);
 
   let canvas: HTMLCanvasElement;
+  // Keep the painted bitmap stable while asynchronous PNG encoding reads it.
+  let captureLocked = false;
   let cssHeight = 1;
   let cssWidth = 1;
   let dragLastX = 0;
@@ -74,7 +76,7 @@
     state.viewX,
     state.viewY,
   );
-  $: if (canvas && cssWidth > 1 && cssHeight > 1) {
+  $: if (canvas && cssWidth > 1 && cssHeight > 1 && !captureLocked) {
     const prepareStarted = performance.now();
     const draw = createFrameDraw(
       state,
@@ -123,6 +125,8 @@
   }
 
   export async function capturePng() {
+    if (captureLocked) throw new Error("canvas capture is already in progress");
+    captureLocked = true;
     const generation = paintGeneration;
     const paintedState = {
       parameters: { ...paintedParameters },
@@ -132,19 +136,23 @@
       viewY: paintedViewY,
       zoomDenominator: paintedZoomDenominator,
     };
-    const image = await captureCanvasPng(
-      canvas,
-      paintedCssWidth,
-      paintedCssHeight,
-      paintedPixelRatio,
-    );
-    if (generation !== paintGeneration) {
-      throw new Error("canvas changed while capture was encoding");
+    try {
+      const image = await captureCanvasPng(
+        canvas,
+        paintedCssWidth,
+        paintedCssHeight,
+        paintedPixelRatio,
+      );
+      if (generation !== paintGeneration) {
+        throw new Error("canvas changed while capture was encoding");
+      }
+      return {
+        ...image,
+        ...paintedState,
+      };
+    } finally {
+      captureLocked = false;
     }
-    return {
-      ...image,
-      ...paintedState,
-    };
   }
 
   onMount(() => {

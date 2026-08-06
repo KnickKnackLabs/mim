@@ -98,7 +98,7 @@ const readme = (
         <Code>mim</Code>{" is an interactive square-grid instrument for exploring mathematical structure. The first instrument evaluates exact GCD and LCM values, highlights prime results, and supports pointer or keyboard movement."}
       </Paragraph>
       <Paragraph>
-        {"Svelte owns the interface shell. Plain TypeScript owns state, commands, mathematics, the display pipeline, and Canvas rendering. Vite compiles the maintained source into one direct-open "}<Code>dist/mim.html</Code>{" file."}
+        {"Svelte owns the interface shell. Plain TypeScript owns state, commands, mathematics, deterministic variation timelines, the display pipeline, and Canvas rendering. Vite compiles the maintained source into one direct-open "}<Code>dist/mim.html</Code>{" file."}
       </Paragraph>
     </Section>
 
@@ -111,10 +111,13 @@ mise run mim:dev
 # Watch one program in a persistent browser.
 mise run mim:watch experiment.mim --open
 
-# Explore a curated annotated program.
+# Explore a native animated variation.
+mise run mim:watch examples/animated-radial-residues-31.mim --open
+
+# Explore a static curated program.
 mise run mim:watch examples/radial-residues-31.mim --open
 
-# Capture the current canvas from that live browser.
+# Capture the exact current variation frame from that live browser.
 # The PNG and its .json sidecar must not already exist.
 mise run mim:capture http://127.0.0.1:4312/?watch=1 /tmp/mim.png
 
@@ -124,7 +127,7 @@ mise run mim`}</CodeBlock>
 
     <Section title="Annotated examples">
       <Paragraph>
-        {"Each program introduces one visual idea and keeps its explanation beside the statements it clarifies. Open any file through "}<Code>mim:watch</Code>{" and edit it with an ordinary text editor."}
+        {"Each program introduces one visual idea and keeps its explanation beside the statements it clarifies. Open any file through "}<Code>mim:watch</Code>{" and edit it with an ordinary text editor. Programs with "}<Code>:vary</Code>{" expose play, restart, and bounded-speed controls."}
       </Paragraph>
       <Table>
         <TableHead><Cell>Program</Cell><Cell>What it shows</Cell></TableHead>
@@ -144,7 +147,8 @@ mise run mim`}</CodeBlock>
         <TableRow><Cell><Code>src/language</Code></Cell><Cell>Parsing, source spans, diagnostics, and formatting</Cell></TableRow>
         <TableRow><Cell><Code>src/program</Code></Cell><Cell>Program structure, names, types, and validation</Cell></TableRow>
         <TableRow><Cell><Code>src/runtime</Code></Cell><Cell>Expression evaluation and prepared frames</Cell></TableRow>
-        <TableRow><Cell><Code>src/browser</Code></Cell><Cell>Browser program, editor, watch, and capture adapters</Cell></TableRow>
+        <TableRow><Cell><Code>src/timeline</Code></Cell><Cell>Pure logical time, variation evaluation, and playback state</Cell></TableRow>
+        <TableRow><Cell><Code>src/browser</Code></Cell><Cell>Browser program, editor, watch, clock, and capture adapters</Cell></TableRow>
         <TableRow><Cell><Code>src/browser/canvas</Code></Cell><Cell>Program-driven Canvas painting</Cell></TableRow>
         <TableRow><Cell><Code>src/instruments</Code></Cell><Cell>Legacy instrument mathematics and display classifications</Cell></TableRow>
         <TableRow><Cell><Code>src/input</Code></Cell><Cell>Keyboard and pointer input translated into commands</Cell></TableRow>

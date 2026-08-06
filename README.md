@@ -9,7 +9,7 @@ Modular source. One portable HTML artifact.
 ![UI: Svelte](https://img.shields.io/badge/UI-Svelte-ff3e00?style=flat)
 ![core: TypeScript](https://img.shields.io/badge/core-TypeScript-3178c6?style=flat)
 ![renderer: Canvas 2D](https://img.shields.io/badge/renderer-Canvas%202D-175e7a?style=flat)
-![unit suites: 52](https://img.shields.io/badge/unit%20suites-52-brightgreen?style=flat)
+![unit suites: 59](https://img.shields.io/badge/unit%20suites-59-brightgreen?style=flat)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue?style=flat)](LICENSE)
 
 </div>
@@ -20,7 +20,7 @@ Modular source. One portable HTML artifact.
 
 `mim` is an interactive square-grid instrument for exploring mathematical structure. The first instrument evaluates exact GCD and LCM values, highlights prime results, and supports pointer or keyboard movement.
 
-Svelte owns the interface shell. Plain TypeScript owns state, commands, mathematics, the display pipeline, and Canvas rendering. Vite compiles the maintained source into one direct-open `dist/mim.html` file.
+Svelte owns the interface shell. Plain TypeScript owns state, commands, mathematics, deterministic variation timelines, the display pipeline, and Canvas rendering. Vite compiles the maintained source into one direct-open `dist/mim.html` file.
 
 ## Start
 
@@ -33,10 +33,13 @@ mise run mim:dev
 # Watch one program in a persistent browser.
 mise run mim:watch experiment.mim --open
 
-# Explore a curated annotated program.
+# Explore a native animated variation.
+mise run mim:watch examples/animated-radial-residues-31.mim --open
+
+# Explore a static curated program.
 mise run mim:watch examples/radial-residues-31.mim --open
 
-# Capture the current canvas from that live browser.
+# Capture the exact current variation frame from that live browser.
 # The PNG and its .json sidecar must not already exist.
 mise run mim:capture http://127.0.0.1:4312/?watch=1 /tmp/mim.png
 
@@ -46,15 +49,16 @@ mise run mim
 
 ## Annotated examples
 
-Each program introduces one visual idea and keeps its explanation beside the statements it clarifies. Open any file through `mim:watch` and edit it with an ordinary text editor.
+Each program introduces one visual idea and keeps its explanation beside the statements it clarifies. Open any file through `mim:watch` and edit it with an ordinary text editor. Programs with `:vary` expose play, restart, and bounded-speed controls.
 
-| Program                           | What it shows                                                                                               |
-| --------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `examples/dyadic-lcm-depth.mim`   | **Dyadic LCM depth**. Powers of two become a nested plaid of divisibility bands.                            |
-| `examples/gcd-lattice.mim`        | **GCD lattice**. Common divisors form symmetric bands across the signed integer grid.                       |
-| `examples/prime-stripped-lcm.mim` | **Prime-stripped LCM**. Remove one chosen prime's complete contribution from an LCM field.                  |
-| `examples/radial-residues-31.mim` | **Radial residues modulo 31**. Squared distance folded by a prime forms repeating targets and curved bands. |
-| `examples/xor-interference.mim`   | **XOR interference**. Binary differences produce nested diamonds, bands, and checker textures.              |
+| Program                                    | What it shows                                                                                                          |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| `examples/animated-radial-residues-31.mim` | **Animated radial residues modulo 31**. A native variation moves the radial field through one seamless modular period. |
+| `examples/dyadic-lcm-depth.mim`            | **Dyadic LCM depth**. Powers of two become a nested plaid of divisibility bands.                                       |
+| `examples/gcd-lattice.mim`                 | **GCD lattice**. Common divisors form symmetric bands across the signed integer grid.                                  |
+| `examples/prime-stripped-lcm.mim`          | **Prime-stripped LCM**. Remove one chosen prime's complete contribution from an LCM field.                             |
+| `examples/radial-residues-31.mim`          | **Radial residues modulo 31**. Squared distance folded by a prime forms repeating targets and curved bands.            |
+| `examples/xor-interference.mim`            | **XOR interference**. Binary differences produce nested diamonds, bands, and checker textures.                         |
 
 ## Architecture
 
@@ -64,7 +68,8 @@ Each program introduces one visual idea and keeps its explanation beside the sta
 | `src/language`       | Parsing, source spans, diagnostics, and formatting                          |
 | `src/program`        | Program structure, names, types, and validation                             |
 | `src/runtime`        | Expression evaluation and prepared frames                                   |
-| `src/browser`        | Browser program, editor, watch, and capture adapters                        |
+| `src/timeline`       | Pure logical time, variation evaluation, and playback state                 |
+| `src/browser`        | Browser program, editor, watch, clock, and capture adapters                 |
 | `src/browser/canvas` | Program-driven Canvas painting                                              |
 | `src/instruments`    | Legacy instrument mathematics and display classifications                   |
 | `src/input`          | Keyboard and pointer input translated into commands                         |
