@@ -49,6 +49,8 @@
 
     <dl>
       <div><dt><kbd>?</kbd></dt><dd>toggle this help</dd></div>
+      <div><dt><kbd>:</kbd></dt><dd>open the mim program editor</dd></div>
+      <div><dt><code>:example</code></dt><dd>browse or load an annotated example</dd></div>
       <div><dt><kbd>Esc</kbd></dt><dd>close help, or clear the recorded motion</dd></div>
       <div><dt><kbd>h j k l</kbd></dt><dd>move the selected cell; hold two directions for diagonals</dd></div>
       <div><dt>pin cursor</dt><dd>move the lattice while keeping the cursor in place</dd></div>

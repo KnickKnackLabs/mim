@@ -6,6 +6,11 @@
     BrowserProgramDiagnostic,
   } from "./browser/browser-program";
   import {
+    exampleNameFromUrl,
+    parseExampleCommand,
+    urlForExample,
+  } from "./browser/example-command";
+  import {
     uploadWatchCapture,
     uploadWatchCaptureFailure,
   } from "./browser/watch-capture";
@@ -38,6 +43,7 @@
   import type { Command } from "./core/commands";
   import { reduceState } from "./core/reducer";
   import { createInitialState } from "./core/state";
+  import { EXAMPLES, findExample } from "./examples/example-library";
   import { commandForKey } from "./input/keyboard";
   import { operate } from "./instruments/gcd-lcm/math";
   import { visibleGridExtent, type VisibleGridExtent } from "./render/layout";
@@ -50,6 +56,7 @@
   } from "./timeline";
   import type { WatchCaptureRequest } from "./watch/protocol";
   import Controls from "./ui/Controls.svelte";
+  import ExamplePicker from "./ui/ExamplePicker.svelte";
   import HelpOverlay from "./ui/HelpOverlay.svelte";
   import LatticeCanvas from "./ui/LatticeCanvas.svelte";
   import PerformanceOverlay from "./ui/PerformanceOverlay.svelte";
@@ -61,7 +68,10 @@
   const watchMode = watchedEndpoint !== null;
   const preparedDemo = !watchMode && preparedDemoEnabled(window.location.hash);
   const programMode = preparedDemo || watchMode;
-  const initialProgram = preparedDemo ? loadBrowserProgram(PREPARED_DEMO_SOURCE) : null;
+  const requestedExampleName = preparedDemo ? exampleNameFromUrl(window.location.href) : null;
+  const initialExample = requestedExampleName ? findExample(requestedExampleName) : null;
+  const initialSource = initialExample?.source ?? PREPARED_DEMO_SOURCE;
+  const initialProgram = preparedDemo ? loadBrowserProgram(initialSource) : null;
   if (initialProgram && !initialProgram.ok) {
     throw new Error(initialProgram.diagnostics.map(({ message }) => message).join("\n"));
   }
@@ -70,12 +80,17 @@
   let captureInFlight = false;
   let captureResumeTimeline = false;
   let captureTimelineElapsedSeconds: number | null = null;
+  let exampleError = requestedExampleName && !initialExample
+    ? `unknown example: ${requestedExampleName}`
+    : null;
+  let examplePickerVisible = false;
   let latticeCanvas: LatticeCanvas;
   let paintedRevision = 0;
   let paintedTimelineElapsedSeconds = 0;
   let pendingCapture: WatchCaptureRequest | null = null;
   let preparedFrame: PreparedFrame | null = null;
   let programEditor: ProgramEditor;
+  let selectedExampleName = initialExample?.name ?? null;
   let watchStatus: WatchConnectionStatus = "connecting";
   let state = createInitialState();
   let timelineClock: TimelineClock | null = null;
@@ -183,11 +198,79 @@
     finishCapture(pendingCapture);
   }
 
+  function exampleCommandDiagnostic(
+    source: string,
+    message: string,
+  ): BrowserProgramDiagnostic {
+    return {
+      code: "syntax",
+      message,
+      span: {
+        end: { column: source.length + 1, line: 1, offset: source.length },
+        start: { column: 1, line: 1, offset: 0 },
+      },
+    };
+  }
+
+  function replaceExampleUrl(name: string | null): void {
+    const url = new URL(window.location.href);
+    if (name) url.searchParams.set("example", name);
+    else url.searchParams.delete("example");
+    window.history.replaceState(null, "", url);
+  }
+
+  function selectExample(name: string, confirmReplacement: boolean): boolean {
+    const example = findExample(name);
+    if (!example) {
+      exampleError = `unknown example: ${name}`;
+      return false;
+    }
+    if (
+      confirmReplacement
+      && programEditor?.hasUnappliedDraft()
+      && !window.confirm("Replace the unapplied program draft with this example?")
+    ) {
+      return false;
+    }
+    const loaded = loadBrowserProgram(example.source);
+    if (!loaded.ok) throw new Error(`bundled example failed to load: ${name}`);
+    browserProgram = loaded.loaded;
+    selectedExampleName = example.name;
+    exampleError = null;
+    examplePickerVisible = false;
+    state = createInitialState();
+    resetTimeline();
+    programEditor?.close();
+    window.history.replaceState(null, "", urlForExample(window.location.href, name));
+    return true;
+  }
+
   function applyPreparedSource(source: string): readonly BrowserProgramDiagnostic[] {
+    const command = parseExampleCommand(source);
+    if (command?.type === "open-example-picker") {
+      examplePickerVisible = true;
+      programEditor?.close();
+      return [];
+    }
+    if (command?.type === "invalid-example-command") {
+      return [exampleCommandDiagnostic(source, command.message)];
+    }
+    if (command?.type === "load-example") {
+      if (!selectExample(command.name, false)) {
+        return [exampleCommandDiagnostic(source, `unknown example: ${command.name}`)];
+      }
+      return [];
+    }
+
     if (!browserProgram) return [];
     const update = updateBrowserProgram(browserProgram, source);
     browserProgram = update.active;
-    if (update.accepted) resetTimeline();
+    if (update.accepted) {
+      selectedExampleName = null;
+      exampleError = null;
+      replaceExampleUrl(null);
+      resetTimeline();
+    }
     return update.diagnostics;
   }
 
@@ -221,6 +304,7 @@
   });
 
   $: preparedProgram = browserProgram?.program ?? null;
+  $: selectedExample = selectedExampleName ? findExample(selectedExampleName) : null;
   $: timelineFrame = timelineFrameAt(
     preparedProgram?.variations ?? [],
     timelineState,
@@ -338,12 +422,17 @@
   {#if programMode}
     <aside class="prepared-demo" aria-label={watchMode ? "Watched mim program" : "Prepared frame demo"}>
       <div class="prepared-demo-heading">
-        <strong>{watchMode ? "watched mim program" : "prepared frame demo"}</strong>
-        <button
-          disabled={watchMode && browserWatch.revision === 0}
-          type="button"
-          on:click={() => programEditor.open()}
-        >{watchMode ? "View program" : "Edit program"}</button>
+        <strong>{watchMode ? "watched mim program" : selectedExample?.title ?? "prepared frame demo"}</strong>
+        <div class="program-editor-actions">
+          {#if !watchMode}
+            <button type="button" on:click={() => examplePickerVisible = true}>Examples</button>
+          {/if}
+          <button
+            disabled={watchMode && browserWatch.revision === 0}
+            type="button"
+            on:click={() => programEditor.open()}
+          >{watchMode ? "View program" : "Edit program"}</button>
+        </div>
       </div>
       {#if watchMode}
         <span
@@ -367,9 +456,10 @@
           {/each}
         {/if}
       {:else}
-        <span>LCM → strip prime 31 → exact color</span>
+        <span>{selectedExample?.description ?? "LCM → strip prime 31 → exact color"}</span>
+        {#if exampleError}<span class="watch-error" role="alert">{exampleError}</span>{/if}
         <code>{browserProgram?.source.trim().replaceAll("\n", " · ")}</code>
-        <span>press <kbd>:</kbd> to edit · append <code>#legacy</code> for the merged renderer</span>
+        <span>press <kbd>:</kbd> to edit · <code>:example</code> to browse · append <code>#legacy</code> for the merged renderer</span>
       {/if}
     </aside>
   {:else}
@@ -406,11 +496,22 @@
     windowSeconds={state.performanceWindowSeconds}
   />
 
+  {#if examplePickerVisible && preparedDemo}
+    <ExamplePicker
+      close={() => examplePickerVisible = false}
+      examples={EXAMPLES}
+      select={(name) => { selectExample(name, true); }}
+      selectedName={selectedExampleName}
+    />
+  {/if}
+
   {#if programMode && (browserProgram || (watchMode && browserWatch.revision > 0))}
     <ProgramEditor
+      active={!examplePickerVisible}
       apply={applyPreparedSource}
       bind:this={programEditor}
       format={formatBrowserProgram}
+      openExamples={watchMode ? null : () => examplePickerVisible = true}
       readOnly={watchMode}
       reportedDiagnostics={watchMode ? browserWatch.diagnostics : []}
       source={watchMode ? browserWatch.source : browserProgram?.source ?? ""}

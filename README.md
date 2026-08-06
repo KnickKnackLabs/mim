@@ -9,7 +9,7 @@ Modular source. One portable HTML artifact.
 ![UI: Svelte](https://img.shields.io/badge/UI-Svelte-ff3e00?style=flat)
 ![core: TypeScript](https://img.shields.io/badge/core-TypeScript-3178c6?style=flat)
 ![renderer: Canvas 2D](https://img.shields.io/badge/renderer-Canvas%202D-175e7a?style=flat)
-![unit suites: 59](https://img.shields.io/badge/unit%20suites-59-brightgreen?style=flat)
+![unit suites: 61](https://img.shields.io/badge/unit%20suites-61-brightgreen?style=flat)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue?style=flat)](LICENSE)
 
 </div>
@@ -49,7 +49,7 @@ mise run mim
 
 ## Annotated examples
 
-Each program introduces one visual idea and keeps its explanation beside the statements it clarifies. Open any file through `mim:watch` and edit it with an ordinary text editor. Programs with `:vary` expose play, restart, and bounded-speed controls.
+Each program introduces one visual idea and keeps its explanation beside the statements it clarifies. The standalone browser bundles the complete library: use `Examples` or `:example <name>` to load full annotated source, or open a file through `mim:watch` with an ordinary text editor. Programs with `:vary` expose play, restart, and bounded-speed controls.
 
 | Program                                    | What it shows                                                                                                          |
 | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
@@ -65,6 +65,7 @@ Each program introduces one visual idea and keeps its explanation beside the sta
 | Owner                | Responsibility                                                              |
 | -------------------- | --------------------------------------------------------------------------- |
 | `src/core`           | Interaction state, semantic commands, reducer                               |
+| `src/examples`       | Curated manifest, source-owned metadata, and browser library                |
 | `src/language`       | Parsing, source spans, diagnostics, and formatting                          |
 | `src/program`        | Program structure, names, types, and validation                             |
 | `src/runtime`        | Expression evaluation and prepared frames                                   |
