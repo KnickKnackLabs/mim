@@ -7,6 +7,7 @@ import { createTimelineState, reduceTimeline } from "./timeline-state";
 const loop: VariationPlan = {
   durationSeconds: 8,
   from: 0,
+  kind: "linear",
   mode: "loop",
   parameter: "phase",
   span: {

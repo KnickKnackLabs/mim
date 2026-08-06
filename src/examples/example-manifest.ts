@@ -4,6 +4,7 @@ export const EXAMPLE_FILES = [
   "animated-two-axis-orbit.mim",
   "animated-hyperbolic-residues.mim",
   "animated-modular-multiplication.mim",
+  "animated-prime-stripped-lcm.mim",
   "radial-residues-31.mim",
   "gcd-lattice.mim",
   "dyadic-lcm-depth.mim",

@@ -64,14 +64,26 @@ export interface ParameterPlan {
 
 export type VariationMode = "loop" | "once" | "pingpong";
 
-export interface VariationPlan {
-  durationSeconds: number;
-  from: number;
+interface VariationPlanBase {
   mode: VariationMode;
   parameter: string;
   span: SourceSpan;
+}
+
+export interface LinearVariationPlan extends VariationPlanBase {
+  durationSeconds: number;
+  from: number;
+  kind: "linear";
   to: number;
 }
+
+export interface DiscreteVariationPlan extends VariationPlanBase {
+  everySeconds: number;
+  kind: "discrete";
+  values: readonly number[];
+}
+
+export type VariationPlan = DiscreteVariationPlan | LinearVariationPlan;
 
 export interface AxisPlan {
   definition: string;

@@ -51,6 +51,8 @@ mise run mim
 
 Each program introduces one visual idea and keeps its explanation beside the statements it clarifies. The standalone browser bundles the complete library: use `Examples` or `:example <name>` to load full annotated source, or open a file through `mim:watch` with an ordinary text editor. Programs with `:vary` expose play, restart, and bounded-speed controls.
 
+Continuous tracks use `:vary phase from 0 to 31 over 8s loop`. Discrete tracks use explicit values or finite inclusive generators, such as `:vary p through primes(2, 31) every 500ms pingpong`. Available generators are `integers`, `evens`, and `primes`.
+
 | Program                                          | What it shows                                                                                                      |
 | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
 | `examples/animated-cubic-quadratic-residues.mim` | **Cubic and quadratic residue waves**. A moving target reveals finite-field level sets hidden inside x³ + y².      |
@@ -58,6 +60,7 @@ Each program introduces one visual idea and keeps its explanation beside the sta
 | `examples/animated-two-axis-orbit.mim`           | **Two-axis orbit**. Two independent clocks move a radial field along a changing path.                              |
 | `examples/animated-hyperbolic-residues.mim`      | **Hyperbolic residues**. Difference-of-squares contours flow through a modular period.                             |
 | `examples/animated-modular-multiplication.mim`   | **Modular multiplication**. A moving multiplication table wraps every value around the prime 31.                   |
+| `examples/animated-prime-stripped-lcm.mim`       | **Prime-stripped LCM pulse**. A discrete prime track reveals how each prime organizes the LCM lattice.             |
 | `examples/radial-residues-31.mim`                | **Radial residues modulo 31**. Squared distance folded by a prime forms repeating targets and curved bands.        |
 | `examples/gcd-lattice.mim`                       | **GCD lattice**. Common divisors form symmetric bands across the signed integer grid.                              |
 | `examples/dyadic-lcm-depth.mim`                  | **Dyadic LCM depth**. Powers of two become a nested plaid of divisibility bands.                                   |
