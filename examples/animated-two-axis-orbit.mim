@@ -1,0 +1,20 @@
+# Native animation — Two-axis orbit
+# Two independent clocks move a radial field along a changing path.
+
+:mim 1
+
+:param phaseX number = 0
+:vary phaseX from 0 to 31 over 8s loop
+
+# Pingpong reverses without wrapping; the unequal duration delays repetition.
+:param phaseY number = 0
+:vary phaseY from 0 to 31 over 13s pingpong
+
+:axis x integers
+:axis y integers
+
+# Both coordinates evolve, so the animation comes from the program itself.
+:field mod((x + phaseX) * (x + phaseX) + (y + phaseY) * (y + phaseY), 31)
+:lens value
+:color magnitude(lens)
+:overlay equality off

@@ -1,0 +1,18 @@
+# Native animation — Cubic and quadratic residues
+# A moving cubic x term crosses a quadratic y field modulo 31.
+
+:mim 1
+
+:param phase number = 0
+:vary phase from 0 to 31 over 12s loop
+
+:axis x integers
+:axis y integers
+
+# Unequal powers break radial symmetry into curved modular streams.
+:field mod((x + phase) * (x + phase) * (x + phase) + y * y, 31)
+:lens value
+
+# Exact colors reveal which streams share the same remainder.
+:color exact(lens)
+:overlay equality off

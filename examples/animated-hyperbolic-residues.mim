@@ -1,0 +1,18 @@
+# Native animation — Hyperbolic residues
+# Difference-of-squares contours flow through a modular period.
+
+:mim 1
+
+:param phase number = 0
+:vary phase from 0 to 31 over 10s loop
+
+:axis x integers
+:axis y integers
+
+# x² - y² forms hyperbolas instead of the circles made by x² + y².
+:field mod((x + phase) * (x + phase) - y * y, 31)
+:lens value
+
+# Magnitude coloring keeps the moving contour depth legible.
+:color magnitude(lens)
+:overlay equality off
