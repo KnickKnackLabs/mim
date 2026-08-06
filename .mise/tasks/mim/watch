@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+#MISE description="Watch one .mim program in a persistent browser"
+#MISE dir="{{config_root}}"
+#USAGE arg "<file>" help="Path to the watched .mim program"
+#USAGE flag "--open" help="Open the loopback browser automatically" default="false"
+#USAGE example "mise run mim:watch experiment.mim --open" header="Watch a file and open the persistent instrument"
+set -euo pipefail
+
+args=(watch "$usage_file")
+if [ "${usage_open:-false}" = "true" ]; then
+  args+=(--open)
+fi
+exec bun run scripts/watch.ts "${args[@]}"

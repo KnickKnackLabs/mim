@@ -1,0 +1,21 @@
+# Prime-stripped LCM
+# Remove one chosen prime's complete contribution from an LCM field.
+
+:mim 1
+
+# Change this prime to reveal a different divisibility structure.
+:param p prime = 2
+
+# Signed axes expose the reflection symmetry around zero.
+:axis x integers
+:axis y integers
+
+# LCM combines the prime powers carried by both coordinates.
+:field lcm(x, y)
+
+# Strip every factor of p before assigning a color.
+:lens strip(value, p)
+:color exact(lens)
+
+# Keep attention on the factor bands rather than the diagonal.
+:overlay equality off

@@ -24,6 +24,12 @@ import {
 const repoRoot = resolve(import.meta.dirname);
 const taskRoot = join(repoRoot, ".mise/tasks");
 
+interface ExampleInfo {
+  description: string;
+  path: string;
+  title: string;
+}
+
 interface TaskInfo {
   description: string;
   name: string;
@@ -37,6 +43,23 @@ function walk(dir: string): string[] {
   });
 }
 
+function examples(): ExampleInfo[] {
+  const exampleRoot = join(repoRoot, "examples");
+  return readdirSync(exampleRoot, { withFileTypes: true })
+    .filter((entry) => entry.isFile() && entry.name.endsWith(".mim"))
+    .map((entry) => {
+      const path = join(exampleRoot, entry.name);
+      const [titleLine, descriptionLine] = readFileSync(path, "utf8").split("\n");
+      const title = titleLine?.match(/^# (.+)$/)?.[1];
+      const description = descriptionLine?.match(/^# (.+)$/)?.[1];
+      if (!title || !description) {
+        throw new Error(`${entry.name} must begin with title and description comments`);
+      }
+      return { description, path: `examples/${entry.name}`, title };
+    })
+    .sort((left, right) => left.path.localeCompare(right.path));
+}
+
 function tasks(): TaskInfo[] {
   return walk(taskRoot).flatMap((path) => {
     const source = readFileSync(path, "utf8");
@@ -47,7 +70,10 @@ function tasks(): TaskInfo[] {
   }).sort((left, right) => left.name.localeCompare(right.name));
 }
 
-const unitTests = walk(join(repoRoot, "src")).filter((path) => path.endsWith(".test.ts")).length;
+const unitTests = ["src", "scripts", "examples"]
+  .flatMap((dir) => walk(join(repoRoot, dir)))
+  .filter((path) => path.endsWith(".test.ts")).length;
+const annotatedExamples = examples();
 const publicTasks = tasks();
 
 const readme = (
@@ -82,19 +108,51 @@ mise install
 bun install --frozen-lockfile
 mise run mim:dev
 
+# Watch one program in a persistent browser.
+mise run mim:watch experiment.mim --open
+
+# Explore a curated annotated program.
+mise run mim:watch examples/radial-residues-31.mim --open
+
+# Capture the current canvas from that live browser.
+# The PNG and its .json sidecar must not already exist.
+mise run mim:capture http://127.0.0.1:4312/?watch=1 /tmp/mim.png
+
 # Build and open the portable artifact.
 mise run mim`}</CodeBlock>
+    </Section>
+
+    <Section title="Annotated examples">
+      <Paragraph>
+        {"Each program introduces one visual idea and keeps its explanation beside the statements it clarifies. Open any file through "}<Code>mim:watch</Code>{" and edit it with an ordinary text editor."}
+      </Paragraph>
+      <Table>
+        <TableHead><Cell>Program</Cell><Cell>What it shows</Cell></TableHead>
+        {annotatedExamples.map((example) => (
+          <TableRow>
+            <Cell><Code>{example.path}</Code></Cell>
+            <Cell><Bold>{example.title}</Bold>{`. ${example.description}`}</Cell>
+          </TableRow>
+        ))}
+      </Table>
     </Section>
 
     <Section title="Architecture">
       <Table>
         <TableHead><Cell>Owner</Cell><Cell>Responsibility</Cell></TableHead>
-        <TableRow><Cell><Code>src/core</Code></Cell><Cell>State, semantic commands, reducer</Cell></TableRow>
-        <TableRow><Cell><Code>src/instruments</Code></Cell><Cell>Exact mathematics and display classifications</Cell></TableRow>
+        <TableRow><Cell><Code>src/core</Code></Cell><Cell>Interaction state, semantic commands, reducer</Cell></TableRow>
+        <TableRow><Cell><Code>src/language</Code></Cell><Cell>Parsing, source spans, diagnostics, and formatting</Cell></TableRow>
+        <TableRow><Cell><Code>src/program</Code></Cell><Cell>Program structure, names, types, and validation</Cell></TableRow>
+        <TableRow><Cell><Code>src/runtime</Code></Cell><Cell>Expression evaluation and prepared frames</Cell></TableRow>
+        <TableRow><Cell><Code>src/browser</Code></Cell><Cell>Browser program, editor, watch, and capture adapters</Cell></TableRow>
+        <TableRow><Cell><Code>src/browser/canvas</Code></Cell><Cell>Program-driven Canvas painting</Cell></TableRow>
+        <TableRow><Cell><Code>src/instruments</Code></Cell><Cell>Legacy instrument mathematics and display classifications</Cell></TableRow>
         <TableRow><Cell><Code>src/input</Code></Cell><Cell>Keyboard and pointer input translated into commands</Cell></TableRow>
-        <TableRow><Cell><Code>src/render</Code></Cell><Cell>Canvas pixels from prepared display data</Cell></TableRow>
+        <TableRow><Cell><Code>src/render</Code></Cell><Cell>Shared layout and legacy rendering boundaries</Cell></TableRow>
         <TableRow><Cell><Code>src/ui</Code></Cell><Cell>Svelte controls and Canvas host</Cell></TableRow>
-        <TableRow><Cell><Code>scripts</Code></Cell><Cell>Standalone build and aggregate validation</Cell></TableRow>
+        <TableRow><Cell><Code>src/watch</Code></Cell><Cell>File observation, live capture, and loopback transport</Cell></TableRow>
+        <TableRow><Cell><Code>examples</Code></Cell><Cell>Curated annotated programs and their owner-level validation</Cell></TableRow>
+        <TableRow><Cell><Code>scripts</Code></Cell><Cell>CLI lifecycle, standalone build, capture requests, and aggregate validation</Cell></TableRow>
       </Table>
     </Section>
 

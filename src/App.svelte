@@ -1,4 +1,30 @@
 <script lang="ts">
+  import { onMount } from "svelte";
+
+  import type {
+    BrowserProgram,
+    BrowserProgramDiagnostic,
+  } from "./browser/browser-program";
+  import {
+    uploadWatchCapture,
+    uploadWatchCaptureFailure,
+  } from "./browser/watch-capture";
+  import { formatBrowserProgram } from "./browser/format-browser-program";
+  import { loadBrowserProgram } from "./browser/load-browser-program";
+  import { updateBrowserProgram } from "./browser/update-browser-program";
+  import {
+    connectWatchClient,
+    watchEndpoint,
+    type WatchConnectionStatus,
+  } from "./browser/watch-client";
+  import {
+    applyBrowserWatchUpdate,
+    createBrowserWatchState,
+  } from "./browser/watch-mode";
+  import {
+    preparedDemoEnabled,
+    PREPARED_DEMO_SOURCE,
+  } from "./browser/prepared-demo";
   import { axisValueAt } from "./core/axis";
   import type { Command } from "./core/commands";
   import { reduceState } from "./core/reducer";
@@ -6,11 +32,31 @@
   import { commandForKey } from "./input/keyboard";
   import { operate } from "./instruments/gcd-lcm/math";
   import { visibleGridExtent, type VisibleGridExtent } from "./render/layout";
+  import type { EvaluationResult, PreparedFrame } from "./runtime";
+  import type { WatchCaptureRequest } from "./watch/protocol";
   import Controls from "./ui/Controls.svelte";
   import HelpOverlay from "./ui/HelpOverlay.svelte";
   import LatticeCanvas from "./ui/LatticeCanvas.svelte";
   import PerformanceOverlay from "./ui/PerformanceOverlay.svelte";
+  import ProgramEditor from "./ui/ProgramEditor.svelte";
 
+  const watchedEndpoint = watchEndpoint(window.location.href);
+  const watchMode = watchedEndpoint !== null;
+  const preparedDemo = !watchMode && preparedDemoEnabled(window.location.hash);
+  const programMode = preparedDemo || watchMode;
+  const initialProgram = preparedDemo ? loadBrowserProgram(PREPARED_DEMO_SOURCE) : null;
+  if (initialProgram && !initialProgram.ok) {
+    throw new Error(initialProgram.diagnostics.map(({ message }) => message).join("\n"));
+  }
+  let browserProgram: BrowserProgram | null = initialProgram?.loaded ?? null;
+  let browserWatch = createBrowserWatchState();
+  let captureInFlight = false;
+  let latticeCanvas: LatticeCanvas;
+  let paintedRevision = 0;
+  let pendingCapture: WatchCaptureRequest | null = null;
+  let preparedFrame: PreparedFrame | null = null;
+  let programEditor: ProgramEditor;
+  let watchStatus: WatchConnectionStatus = "connecting";
   let state = createInitialState();
   let visibleExtent: VisibleGridExtent = visibleGridExtent(1, 1, 1);
 
@@ -46,6 +92,99 @@
       : reduceState(next, { type: "pan-view", dx, dy });
   }
 
+  function evaluationText(result: EvaluationResult | null): string {
+    if (!result) return "not evaluated";
+    if (result.kind === "number" || result.kind === "color") return `${result.value}`;
+    return `${result.kind}: ${result.message}`;
+  }
+
+  function applyPreparedSource(source: string): readonly BrowserProgramDiagnostic[] {
+    if (!browserProgram) return [];
+    const update = updateBrowserProgram(browserProgram, source);
+    browserProgram = update.active;
+    return update.diagnostics;
+  }
+
+  onMount(() => {
+    if (!watchedEndpoint) return;
+    return connectWatchClient(watchedEndpoint, {
+      onCapture: (request) => pendingCapture = request,
+      onStatus: (status) => watchStatus = status,
+      onUpdate: (update) => {
+        browserWatch = applyBrowserWatchUpdate(browserWatch, update);
+        browserProgram = browserWatch.active;
+      },
+    });
+  });
+
+  $: preparedProgram = browserProgram?.program ?? null;
+
+  async function completeCapture(request: WatchCaptureRequest): Promise<void> {
+    captureInFlight = true;
+    try {
+      const capture = await (async () => {
+        try {
+          const next = await latticeCanvas.capturePng();
+          if (next.revision !== request.revision) {
+            throw new Error("canvas changed before capture encoding began");
+          }
+          return next;
+        } catch (error) {
+          await uploadWatchCaptureFailure(
+            window.location.href,
+            request,
+            error,
+          );
+          return null;
+        }
+      })();
+      if (!capture) return;
+
+      await uploadWatchCapture(
+        window.location.href,
+        request,
+        capture.image,
+        {
+          cssHeight: capture.cssHeight,
+          cssWidth: capture.cssWidth,
+          devicePixelRatio: capture.devicePixelRatio,
+          locale: navigator.language,
+          pixelHeight: capture.pixelHeight,
+          pixelWidth: capture.pixelWidth,
+          revision: capture.revision,
+          userAgent: navigator.userAgent,
+          viewX: capture.viewX,
+          viewY: capture.viewY,
+          zoomDenominator: capture.zoomDenominator,
+        },
+      );
+    } catch (error) {
+      console.error(error);
+    } finally {
+      if (pendingCapture?.id === request.id) pendingCapture = null;
+      captureInFlight = false;
+    }
+  }
+
+  $: if (
+    watchMode
+    && latticeCanvas
+    && pendingCapture
+    && !captureInFlight
+    && browserWatch.accepted
+    && browserWatch.revision === pendingCapture.revision
+    && paintedRevision === pendingCapture.revision
+  ) {
+    void completeCapture(pendingCapture);
+  }
+
+  $: if (
+    pendingCapture
+    && browserWatch.revision > pendingCapture.revision
+  ) {
+    pendingCapture = null;
+  }
+
   function handleGlobalHelpKeydown(event: KeyboardEvent): void {
     if (event.defaultPrevented || (event.key !== "?" && event.key !== "Escape")) return;
     const command = commandForKey(event.key);
@@ -59,6 +198,7 @@
   $: selectedValue = selectedX === null || selectedY === null
     ? null
     : operate(state.operation, selectedX, selectedY);
+  $: preparedCell = preparedFrame?.selectedCell ?? null;
   $: recordedMotion = state.motionStart && state.motionEnd
     ? {
         dx: state.motionEnd.x - state.motionStart.x,
@@ -71,16 +211,76 @@
 <svelte:window on:keydown={handleGlobalHelpKeydown} />
 
 <main>
-  <Controls {state} {dispatch} />
+  {#if programMode}
+    <aside class="prepared-demo" aria-label={watchMode ? "Watched mim program" : "Prepared frame demo"}>
+      <div class="prepared-demo-heading">
+        <strong>{watchMode ? "watched mim program" : "prepared frame demo"}</strong>
+        <button
+          disabled={watchMode && browserWatch.revision === 0}
+          type="button"
+          on:click={() => programEditor.open()}
+        >{watchMode ? "View program" : "Edit program"}</button>
+      </div>
+      {#if watchMode}
+        <span
+          class:watch-error={watchStatus === "disconnected"}
+          role="status"
+        >{watchStatus} · revision {browserWatch.revision}</span>
+        <code>{browserWatch.source.trim().replaceAll("\n", " · ") || "waiting for source"}</code>
+        {#if browserWatch.revision === 0}
+          <span>waiting for the watched file</span>
+        {:else if browserWatch.accepted}
+          <span>
+            valid · {watchStatus === "connected" ? "live" : "showing last received picture"}
+            · press <kbd>:</kbd> to view
+          </span>
+        {:else}
+          <span class="watch-error" role="alert">invalid file · showing last valid picture</span>
+          {#each browserWatch.diagnostics as diagnostic}
+            <span class="watch-error">
+              {diagnostic.span.start.line}:{diagnostic.span.start.column} {diagnostic.message}
+            </span>
+          {/each}
+        {/if}
+      {:else}
+        <span>LCM → strip prime 31 → exact color</span>
+        <code>{browserProgram?.source.trim().replaceAll("\n", " · ")}</code>
+        <span>press <kbd>:</kbd> to edit · append <code>#legacy</code> for the merged renderer</span>
+      {/if}
+    </aside>
+  {:else}
+    <Controls {state} {dispatch} />
+  {/if}
 
   <div class="instrument">
-    <LatticeCanvas {state} {dispatch} bind:visibleExtent />
+    <LatticeCanvas
+      {state}
+      {dispatch}
+      frameRevision={watchMode ? browserWatch.revision : 0}
+      program={preparedProgram}
+      bind:paintedRevision
+      bind:preparedFrame
+      bind:this={latticeCanvas}
+      bind:visibleExtent
+    />
   </div>
 
   <PerformanceOverlay
     visible={state.performanceVisible}
     windowSeconds={state.performanceWindowSeconds}
   />
+
+  {#if programMode && (browserProgram || (watchMode && browserWatch.revision > 0))}
+    <ProgramEditor
+      apply={applyPreparedSource}
+      bind:this={programEditor}
+      format={formatBrowserProgram}
+      readOnly={watchMode}
+      reportedDiagnostics={watchMode ? browserWatch.diagnostics : []}
+      source={watchMode ? browserWatch.source : browserProgram?.source ?? ""}
+      watchConnected={watchStatus === "connected"}
+    />
+  {/if}
 
   <aside class="camera-readout" aria-label="Camera status">
     <span>zoom <strong>1/{state.zoomDenominator}</strong></span>
@@ -94,7 +294,11 @@
     {:else if recordedMotion}
       <span>{recordedMotion.steps} motions · Δ({recordedMotion.dx}, {recordedMotion.dy})</span>
     {/if}
-    {#if state.cursor && selectedX !== null && selectedY !== null && selectedValue !== null}
+    {#if programMode && preparedCell}
+      <strong>({preparedCell.x}, {preparedCell.y})</strong>
+      <span>field {evaluationText(preparedCell.evaluation.field)}</span>
+      <span>lens {evaluationText(preparedCell.evaluation.lens)}</span>
+    {:else if !programMode && state.cursor && selectedX !== null && selectedY !== null && selectedValue !== null}
       <strong>{state.operation}({selectedX}, {selectedY})</strong>
       <span>= {selectedValue}</span>
     {:else}

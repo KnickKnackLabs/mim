@@ -1,0 +1,18 @@
+# Radial residues modulo 31
+# Squared distance folded by a prime forms repeating targets and curved bands.
+
+:mim 1
+
+# The signed lattice keeps the origin at the visual center.
+:axis x integers
+:axis y integers
+
+# x² + y² is squared distance; modulo 31 folds it into repeating radial bands.
+:field mod(x * x + y * y, 31)
+
+# Preserve the remainder and map its magnitude to a continuous paint scale.
+:lens value
+:color magnitude(lens)
+
+# The diagonal is unrelated to this radial instrument.
+:overlay equality off

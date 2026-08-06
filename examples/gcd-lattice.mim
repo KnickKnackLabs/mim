@@ -1,0 +1,18 @@
+# GCD lattice
+# Common divisors form symmetric bands across the signed integer grid.
+
+:mim 1
+
+# Keep zero at the center and make every sign visible.
+:axis x integers
+:axis y integers
+
+# Each cell contains the greatest common divisor of its coordinates.
+:field gcd(x, y)
+
+# Preserve the exact GCD for coloring.
+:lens value
+:color exact(lens)
+
+# Highlight the cells where both coordinates are equal.
+:overlay equality on

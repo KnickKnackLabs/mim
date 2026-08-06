@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+#MISE description="Capture the current canvas from one live mim watch session"
+#MISE dir="{{config_root}}"
+#USAGE arg "<session>" help="Loopback URL printed by mim:watch"
+#USAGE arg "<output>" help="Destination .png path"
+#USAGE example "mise run mim:capture http://127.0.0.1:4312/?watch=1 /tmp/mim.png" header="Capture the connected browser canvas"
+set -euo pipefail
+
+exec bun run scripts/capture.ts capture "$usage_session" "$usage_output"

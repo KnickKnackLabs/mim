@@ -1,0 +1,22 @@
+# Dyadic LCM depth
+# Powers of two become a nested plaid of divisibility bands.
+
+:mim 1
+
+# Two selects the dyadic valuation used by the lens.
+:param p prime = 2
+
+# Signed coordinates make the power-of-two bands repeat symmetrically.
+:axis x integers
+:axis y integers
+
+# LCM keeps the larger prime exponent found in either coordinate.
+:field lcm(x, y)
+
+# Valuation counts how many copies of p divide each LCM value.
+# Zero has no finite valuation, leaving a visible central error cross.
+:lens valuation(value, p)
+:color exact(lens)
+
+# The valuation bands are the subject, so hide the equality overlay.
+:overlay equality off

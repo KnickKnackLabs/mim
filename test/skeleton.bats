@@ -42,6 +42,18 @@ load test_helper
   done < <(find "$REPO_DIR/.mise/tasks" -type f -print | sort)
 }
 
+@test "watch task exposes its file boundary before starting a server" {
+  run mim mim:watch experiment.txt
+  [ "$status" -eq 2 ]
+  [[ "$output" == *"expected a .mim program"* ]]
+}
+
+@test "capture task rejects non-loopback sessions before making a request" {
+  run mim mim:capture https://example.com/?watch=1 "$BATS_TEST_TMPDIR/frame.png"
+  [ "$status" -eq 2 ]
+  [[ "$output" == *"watch URL must use loopback HTTP"* ]]
+}
+
 @test "standalone build task reaches the package build command" {
   mock_dir="$BATS_TEST_TMPDIR/mock-bin"
   log="$BATS_TEST_TMPDIR/bun.log"

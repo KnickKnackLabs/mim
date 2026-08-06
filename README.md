@@ -9,7 +9,7 @@ Modular source. One portable HTML artifact.
 ![UI: Svelte](https://img.shields.io/badge/UI-Svelte-ff3e00?style=flat)
 ![core: TypeScript](https://img.shields.io/badge/core-TypeScript-3178c6?style=flat)
 ![renderer: Canvas 2D](https://img.shields.io/badge/renderer-Canvas%202D-175e7a?style=flat)
-![unit suites: 9](https://img.shields.io/badge/unit%20suites-9-brightgreen?style=flat)
+![unit suites: 52](https://img.shields.io/badge/unit%20suites-52-brightgreen?style=flat)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue?style=flat)](LICENSE)
 
 </div>
@@ -30,31 +30,62 @@ mise install
 bun install --frozen-lockfile
 mise run mim:dev
 
+# Watch one program in a persistent browser.
+mise run mim:watch experiment.mim --open
+
+# Explore a curated annotated program.
+mise run mim:watch examples/radial-residues-31.mim --open
+
+# Capture the current canvas from that live browser.
+# The PNG and its .json sidecar must not already exist.
+mise run mim:capture http://127.0.0.1:4312/?watch=1 /tmp/mim.png
+
 # Build and open the portable artifact.
 mise run mim
 ```
 
+## Annotated examples
+
+Each program introduces one visual idea and keeps its explanation beside the statements it clarifies. Open any file through `mim:watch` and edit it with an ordinary text editor.
+
+| Program                           | What it shows                                                                                               |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `examples/dyadic-lcm-depth.mim`   | **Dyadic LCM depth**. Powers of two become a nested plaid of divisibility bands.                            |
+| `examples/gcd-lattice.mim`        | **GCD lattice**. Common divisors form symmetric bands across the signed integer grid.                       |
+| `examples/prime-stripped-lcm.mim` | **Prime-stripped LCM**. Remove one chosen prime's complete contribution from an LCM field.                  |
+| `examples/radial-residues-31.mim` | **Radial residues modulo 31**. Squared distance folded by a prime forms repeating targets and curved bands. |
+| `examples/xor-interference.mim`   | **XOR interference**. Binary differences produce nested diamonds, bands, and checker textures.              |
+
 ## Architecture
 
-| Owner             | Responsibility                                      |
-| ----------------- | --------------------------------------------------- |
-| `src/core`        | State, semantic commands, reducer                   |
-| `src/instruments` | Exact mathematics and display classifications       |
-| `src/input`       | Keyboard and pointer input translated into commands |
-| `src/render`      | Canvas pixels from prepared display data            |
-| `src/ui`          | Svelte controls and Canvas host                     |
-| `scripts`         | Standalone build and aggregate validation           |
+| Owner                | Responsibility                                                              |
+| -------------------- | --------------------------------------------------------------------------- |
+| `src/core`           | Interaction state, semantic commands, reducer                               |
+| `src/language`       | Parsing, source spans, diagnostics, and formatting                          |
+| `src/program`        | Program structure, names, types, and validation                             |
+| `src/runtime`        | Expression evaluation and prepared frames                                   |
+| `src/browser`        | Browser program, editor, watch, and capture adapters                        |
+| `src/browser/canvas` | Program-driven Canvas painting                                              |
+| `src/instruments`    | Legacy instrument mathematics and display classifications                   |
+| `src/input`          | Keyboard and pointer input translated into commands                         |
+| `src/render`         | Shared layout and legacy rendering boundaries                               |
+| `src/ui`             | Svelte controls and Canvas host                                             |
+| `src/watch`          | File observation, live capture, and loopback transport                      |
+| `examples`           | Curated annotated programs and their owner-level validation                 |
+| `scripts`            | CLI lifecycle, standalone build, capture requests, and aggregate validation |
 
 ## Tasks
 
-| Task                 | Description                                  |
-| -------------------- | -------------------------------------------- |
-| `mise run bats`      | Run BATS task-boundary tests                 |
-| `mise run doctor`    | Check local development setup                |
-| `mise run mim`       | Build and open the standalone mim instrument |
-| `mise run mim:build` | Build the standalone mim HTML artifact       |
-| `mise run mim:dev`   | Run the mim development server               |
-| `mise run test`      | Run the complete mim validation path         |
+| Task                   | Description                                                |
+| ---------------------- | ---------------------------------------------------------- |
+| `mise run bats`        | Run BATS task-boundary tests                               |
+| `mise run doctor`      | Check local development setup                              |
+| `mise run mim`         | Build and open the standalone mim instrument               |
+| `mise run mim:build`   | Build the standalone mim HTML artifact                     |
+| `mise run mim:capture` | Capture the current canvas from one live mim watch session |
+| `mise run mim:dev`     | Run the mim development server                             |
+| `mise run mim:watch`   | Watch one .mim program in a persistent browser             |
+| `mise run test`        | Run the complete mim validation path                       |
 
 ## Validation
 
