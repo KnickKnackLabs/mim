@@ -115,6 +115,7 @@ mise run mim:watch experiment.mim --open
 mise run mim:watch examples/radial-residues-31.mim --open
 
 # Capture the current canvas from that live browser.
+# The PNG and its .json sidecar must not already exist.
 mise run mim:capture http://127.0.0.1:4312/?watch=1 /tmp/mim.png
 
 # Build and open the portable artifact.
@@ -139,10 +140,15 @@ mise run mim`}</CodeBlock>
     <Section title="Architecture">
       <Table>
         <TableHead><Cell>Owner</Cell><Cell>Responsibility</Cell></TableHead>
-        <TableRow><Cell><Code>src/core</Code></Cell><Cell>State, semantic commands, reducer</Cell></TableRow>
-        <TableRow><Cell><Code>src/instruments</Code></Cell><Cell>Exact mathematics and display classifications</Cell></TableRow>
+        <TableRow><Cell><Code>src/core</Code></Cell><Cell>Interaction state, semantic commands, reducer</Cell></TableRow>
+        <TableRow><Cell><Code>src/language</Code></Cell><Cell>Parsing, source spans, diagnostics, and formatting</Cell></TableRow>
+        <TableRow><Cell><Code>src/program</Code></Cell><Cell>Program structure, names, types, and validation</Cell></TableRow>
+        <TableRow><Cell><Code>src/runtime</Code></Cell><Cell>Expression evaluation and prepared frames</Cell></TableRow>
+        <TableRow><Cell><Code>src/browser</Code></Cell><Cell>Browser program, editor, watch, and capture adapters</Cell></TableRow>
+        <TableRow><Cell><Code>src/browser/canvas</Code></Cell><Cell>Program-driven Canvas painting</Cell></TableRow>
+        <TableRow><Cell><Code>src/instruments</Code></Cell><Cell>Legacy instrument mathematics and display classifications</Cell></TableRow>
         <TableRow><Cell><Code>src/input</Code></Cell><Cell>Keyboard and pointer input translated into commands</Cell></TableRow>
-        <TableRow><Cell><Code>src/render</Code></Cell><Cell>Canvas pixels from prepared display data</Cell></TableRow>
+        <TableRow><Cell><Code>src/render</Code></Cell><Cell>Shared layout and legacy rendering boundaries</Cell></TableRow>
         <TableRow><Cell><Code>src/ui</Code></Cell><Cell>Svelte controls and Canvas host</Cell></TableRow>
         <TableRow><Cell><Code>src/watch</Code></Cell><Cell>File observation, live capture, and loopback transport</Cell></TableRow>
         <TableRow><Cell><Code>examples</Code></Cell><Cell>Curated annotated programs and their owner-level validation</Cell></TableRow>

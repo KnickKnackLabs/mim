@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -8,28 +8,18 @@ import {
   validatePng,
   writeCaptureArtifact,
 } from "./capture-artifact";
+import { onePixelPng } from "./capture-test-support";
 import type { BrowserCaptureMetadata } from "./protocol";
 
 const temporaryDirectories: string[] = [];
 
-function png(width: number, height: number): Uint8Array<ArrayBuffer> {
-  const image = new Uint8Array(new ArrayBuffer(24));
-  image.set([137, 80, 78, 71, 13, 10, 26, 10]);
-  const view = new DataView(image.buffer);
-  view.setUint32(8, 13);
-  image.set([73, 72, 68, 82], 12);
-  view.setUint32(16, width);
-  view.setUint32(20, height);
-  return image;
-}
-
 const browser: BrowserCaptureMetadata = {
-  cssHeight: 720,
-  cssWidth: 1280,
-  devicePixelRatio: 2,
+  cssHeight: 1,
+  cssWidth: 1,
+  devicePixelRatio: 1,
   locale: "en-US",
-  pixelHeight: 1440,
-  pixelWidth: 2560,
+  pixelHeight: 1,
+  pixelWidth: 1,
   revision: 4,
   userAgent: "mim test browser",
   viewX: 3,
@@ -49,7 +39,7 @@ describe("capture artifacts", () => {
     const directory = await mkdtemp(join(tmpdir(), "mim-capture-"));
     temporaryDirectories.push(directory);
     const output = join(directory, "frame.png");
-    const image = png(browser.pixelWidth, browser.pixelHeight);
+    const image = onePixelPng();
 
     const metadata = await writeCaptureArtifact({
       browser,
@@ -74,25 +64,48 @@ describe("capture artifacts", () => {
   test("validates browser metadata, PNG bytes, and output boundaries", async () => {
     expect(parseBrowserCaptureMetadata(browser)).toEqual(browser);
     expect(parseBrowserCaptureMetadata({ ...browser, pixelWidth: 0 })).toBeNull();
+    expect(parseBrowserCaptureMetadata({ ...browser, pixelWidth: 2 })).toBeNull();
     expect(parseBrowserCaptureMetadata({ ...browser, devicePixelRatio: 100 })).toBeNull();
-    expect(validatePng(png(2560, 1440))).toEqual({ height: 1440, width: 2560 });
+    expect(validatePng(onePixelPng())).toEqual({ height: 1, width: 1 });
     expect(() => validatePng(new Uint8Array([1, 2, 3]))).toThrow("not a PNG");
+    expect(() => validatePng(onePixelPng().slice(0, -1))).toThrow("truncated");
+    const corrupt = onePixelPng();
+    corrupt[40] ^= 1;
+    expect(() => validatePng(corrupt)).toThrow("checksum");
 
     const directory = await mkdtemp(join(tmpdir(), "mim-capture-"));
     temporaryDirectories.push(directory);
     await expect(writeCaptureArtifact({
       browser,
-      image: png(2560, 1440),
+      image: onePixelPng(),
       output: join(directory, "frame.jpg"),
       runtime: { htmlSha256: "h", mimDirty: false, mimRevision: "r" },
       source: { revision: 1, source: "source" },
     })).rejects.toThrow("must end in .png");
     await expect(writeCaptureArtifact({
-      browser,
-      image: png(800, 600),
+      browser: { ...browser, cssWidth: 2, pixelWidth: 2 },
+      image: onePixelPng(),
       output: join(directory, "frame.png"),
       runtime: { htmlSha256: "h", mimDirty: false, mimRevision: "r" },
       source: { revision: 1, source: "source" },
     })).rejects.toThrow("do not match browser metadata");
+  });
+
+  test("never replaces an existing artifact or leaves a new sidecar beside it", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "mim-capture-"));
+    temporaryDirectories.push(directory);
+    const output = join(directory, "frame.png");
+    await writeFile(output, "existing");
+
+    await expect(writeCaptureArtifact({
+      browser,
+      image: onePixelPng(),
+      output,
+      runtime: { htmlSha256: "h", mimDirty: false, mimRevision: "r" },
+      source: { revision: 1, source: "source" },
+    })).rejects.toThrow("already exists");
+
+    expect(await readFile(output, "utf8")).toBe("existing");
+    await expect(readFile(`${output}.json`)).rejects.toThrow();
   });
 });

@@ -45,6 +45,7 @@ export class CaptureSession {
   readonly #clients = new Set<CaptureClient>();
   readonly #options: Required<Pick<CaptureSessionOptions, "timeoutMs" | "writeArtifact">>
     & Pick<CaptureSessionOptions, "runtime">;
+  #completion: Promise<void> | null = null;
   #pending: PendingCapture | null = null;
 
   constructor(options: CaptureSessionOptions) {
@@ -136,20 +137,16 @@ export class CaptureSession {
 
     pending.completing = true;
     this.#clearPendingTriggers(pending);
+    const operation = this.#completePending(pending, image, browser);
+    const completion = operation.then(
+      () => undefined,
+      () => undefined,
+    );
+    this.#completion = completion;
     try {
-      const metadata = await this.#options.writeArtifact({
-        browser,
-        image,
-        output: pending.output,
-        runtime: this.#options.runtime,
-        source: pending.source,
-      });
-      this.#settlePending(() => pending.resolve(metadata));
-      return metadata;
-    } catch (error) {
-      const normalized = error instanceof Error ? error : new Error(String(error));
-      this.#rejectPending(normalized);
-      throw normalized;
+      return await operation;
+    } finally {
+      if (this.#completion === completion) this.#completion = null;
     }
   }
 
@@ -173,9 +170,35 @@ export class CaptureSession {
     }
   }
 
-  close(): void {
-    this.#rejectPending(new CaptureSessionError("watch server closed", 503));
+  async close(): Promise<void> {
+    const completing = this.#pending?.completing ? this.#completion : null;
+    if (completing) await completing;
+    if (this.#pending && !this.#pending.completing) {
+      this.#rejectPending(new CaptureSessionError("watch server closed", 503));
+    }
     this.#clients.clear();
+  }
+
+  async #completePending(
+    pending: PendingCapture,
+    image: Uint8Array,
+    browser: BrowserCaptureMetadata,
+  ): Promise<CaptureArtifactMetadata> {
+    try {
+      const metadata = await this.#options.writeArtifact({
+        browser,
+        image,
+        output: pending.output,
+        runtime: this.#options.runtime,
+        source: pending.source,
+      });
+      this.#settlePending(() => pending.resolve(metadata));
+      return metadata;
+    } catch (error) {
+      const normalized = error instanceof Error ? error : new Error(String(error));
+      this.#rejectPending(normalized);
+      throw normalized;
+    }
   }
 
   #rejectPending(error: Error): void {

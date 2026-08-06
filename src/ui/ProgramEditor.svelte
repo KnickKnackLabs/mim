@@ -108,7 +108,7 @@
   }
 </script>
 
-<svelte:window on:keydown={handleWindowKeydown} />
+<svelte:window on:keydown|capture={handleWindowKeydown} />
 
 {#if visible}
   <aside class="program-editor" aria-labelledby="program-editor-title">

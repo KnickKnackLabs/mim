@@ -3,11 +3,12 @@
 
 :mim 1
 
-# Absolute coordinates mirror one binary pattern into four quadrants.
+# Signed axes keep the origin centered and every quadrant visible.
 :axis x integers
 :axis y integers
 
-# XOR marks every bit position where the coordinate magnitudes differ.
+# Absolute coordinate magnitudes mirror one binary pattern into four quadrants.
+# XOR marks every bit position where those magnitudes differ.
 :field xor(abs(x), abs(y))
 
 # Exact coloring keeps distinct XOR results visually distinct.

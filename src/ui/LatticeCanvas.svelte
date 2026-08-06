@@ -99,14 +99,14 @@
         totalMs: paintEnded - prepareStarted,
         wallTime: Date.now(),
       });
-      paintedRevision = frameRevision;
-      paintedCssHeight = cssHeight;
-      paintedCssWidth = cssWidth;
-      paintedPixelRatio = pixelRatio;
-      paintedViewX = state.viewX;
-      paintedViewY = state.viewY;
-      paintedZoomDenominator = state.zoomDenominator;
     }
+    paintedRevision = frameRevision;
+    paintedCssHeight = cssHeight;
+    paintedCssWidth = cssWidth;
+    paintedPixelRatio = pixelRatio;
+    paintedViewX = state.viewX;
+    paintedViewY = state.viewY;
+    paintedZoomDenominator = state.zoomDenominator;
   }
 
   export async function capturePng() {
@@ -131,7 +131,7 @@
     const observer = new ResizeObserver(([entry]) => {
       cssWidth = entry.contentRect.width;
       cssHeight = entry.contentRect.height;
-      pixelRatio = window.devicePixelRatio || 1;
+      pixelRatio = Math.max(1, window.devicePixelRatio || 1);
     });
     observer.observe(canvas);
     canvas.focus();

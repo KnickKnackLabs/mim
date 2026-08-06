@@ -87,7 +87,8 @@ mise run mim:capture <watch-url> /tmp/radial.png
 The server requests the exact accepted revision from the listening page.
 `LatticeCanvas` returns the PNG from the canvas it actually painted.
 The browser uploads the image and camera/viewport metadata to the loopback server.
-The server writes the PNG and a JSON sidecar atomically.
+The server validates PNG structure and checksums,
+then publishes the PNG and JSON sidecar without replacing an existing artifact.
 The browser never chooses the filesystem destination.
 
 Capture fails closed for invalid or stale source,

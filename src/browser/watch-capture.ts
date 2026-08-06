@@ -40,6 +40,7 @@ export async function uploadWatchCapture(
   const response = await fetcher(captureResultEndpoint(pageHref, request.id), {
     body: form,
     method: "POST",
+    signal: AbortSignal.timeout(15_000),
   });
   await requireSuccessfulCaptureResponse(response);
 }
@@ -58,6 +59,7 @@ export async function uploadWatchCaptureFailure(
     }),
     headers: { "Content-Type": "application/json" },
     method: "POST",
+    signal: AbortSignal.timeout(15_000),
   });
   await requireSuccessfulCaptureResponse(response);
 }

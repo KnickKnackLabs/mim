@@ -53,7 +53,11 @@ export function observeProgramFile(
   }
 
   const watcher: FSWatcher = watch(dirname(path), () => schedule());
-  watcher.on("error", options.onError);
+  watcher.on("error", (error) => {
+    if (!closed) options.onError(error);
+  });
+  // Close the gap between the caller's initial read and watcher installation.
+  schedule();
 
   return {
     close(): void {

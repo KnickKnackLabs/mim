@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
-import { rename, stat, unlink, writeFile } from "node:fs/promises";
-import { dirname, extname } from "node:path";
+import { link, stat, unlink, writeFile } from "node:fs/promises";
+import { dirname, extname, isAbsolute } from "node:path";
 
 import type { BrowserCaptureMetadata, WatchUpdate } from "./protocol";
 
@@ -53,6 +53,21 @@ function captureDimension(value: unknown): value is number {
     && (value as number) <= MAX_CAPTURE_DIMENSION;
 }
 
+function crc32(value: Uint8Array): number {
+  let crc = 0xffff_ffff;
+  for (const byte of value) {
+    crc ^= byte;
+    for (let bit = 0; bit < 8; bit += 1) {
+      crc = (crc >>> 1) ^ (0xedb8_8320 & -(crc & 1));
+    }
+  }
+  return (crc ^ 0xffff_ffff) >>> 0;
+}
+
+function chunkType(image: Uint8Array, offset: number): string {
+  return String.fromCharCode(...image.subarray(offset + 4, offset + 8));
+}
+
 export function parseBrowserCaptureMetadata(
   value: unknown,
 ): BrowserCaptureMetadata | null {
@@ -66,8 +81,16 @@ export function parseBrowserCaptureMetadata(
     || !captureDimension(candidate.pixelHeight)
     || !captureDimension(candidate.pixelWidth)
     || !finiteNumber(candidate.devicePixelRatio)
-    || candidate.devicePixelRatio <= 0
+    || candidate.devicePixelRatio < 1
     || candidate.devicePixelRatio > 8
+    || candidate.pixelWidth !== Math.floor(
+      Math.max(1, Math.floor(candidate.cssWidth as number))
+        * candidate.devicePixelRatio,
+    )
+    || candidate.pixelHeight !== Math.floor(
+      Math.max(1, Math.floor(candidate.cssHeight as number))
+        * candidate.devicePixelRatio,
+    )
     || !Number.isSafeInteger(candidate.zoomDenominator)
     || (candidate.zoomDenominator as number) <= 0
     || !finiteNumber(candidate.viewX)
@@ -93,22 +116,67 @@ export function validatePng(
     throw new Error(`capture exceeds ${MAX_CAPTURE_BYTES} bytes`);
   }
   if (
-    image.byteLength < 24
+    image.byteLength < 8
     || PNG_SIGNATURE.some((byte, index) => image[index] !== byte)
-    || PNG_IHDR.some((byte, index) => image[index + 12] !== byte)
   ) {
-    throw new Error("capture is not a PNG image with an IHDR header");
+    throw new Error("capture is not a PNG image");
   }
+
   const view = new DataView(image.buffer, image.byteOffset, image.byteLength);
-  const chunkLength = view.getUint32(8);
-  const width = view.getUint32(16);
-  const height = view.getUint32(20);
-  if (
-    chunkLength !== 13
-    || !captureDimension(width)
-    || !captureDimension(height)
-  ) {
-    throw new Error("capture PNG dimensions are invalid");
+  let height = 0;
+  let offset = PNG_SIGNATURE.length;
+  let sawData = false;
+  let sawHeader = false;
+  let sawTrailer = false;
+  let width = 0;
+
+  while (offset < image.byteLength) {
+    if (offset + 12 > image.byteLength) {
+      throw new Error("capture PNG has a truncated chunk");
+    }
+    const length = view.getUint32(offset);
+    const checksumOffset = offset + 8 + length;
+    const nextOffset = checksumOffset + 4;
+    if (checksumOffset < offset || nextOffset > image.byteLength) {
+      throw new Error("capture PNG has an invalid chunk length");
+    }
+    const type = chunkType(image, offset);
+    if (
+      view.getUint32(checksumOffset)
+      !== crc32(image.subarray(offset + 4, checksumOffset))
+    ) {
+      throw new Error(`capture PNG ${type || "unknown"} checksum is invalid`);
+    }
+
+    if (!sawHeader) {
+      if (
+        type !== String.fromCharCode(...PNG_IHDR)
+        || length !== 13
+      ) {
+        throw new Error("capture PNG must begin with an IHDR chunk");
+      }
+      width = view.getUint32(offset + 8);
+      height = view.getUint32(offset + 12);
+      if (!captureDimension(width) || !captureDimension(height)) {
+        throw new Error("capture PNG dimensions are invalid");
+      }
+      sawHeader = true;
+    } else if (type === "IHDR") {
+      throw new Error("capture PNG has more than one IHDR chunk");
+    }
+
+    if (type === "IDAT") sawData = true;
+    if (type === "IEND") {
+      if (length !== 0 || nextOffset !== image.byteLength) {
+        throw new Error("capture PNG has an invalid IEND chunk");
+      }
+      sawTrailer = true;
+    }
+    offset = nextOffset;
+  }
+
+  if (!sawHeader || !sawData || !sawTrailer) {
+    throw new Error("capture PNG is missing required chunks");
   }
   return { height, width };
 }
@@ -116,6 +184,9 @@ export function validatePng(
 export async function writeCaptureArtifact(
   input: CaptureArtifactInput,
 ): Promise<CaptureArtifactMetadata> {
+  if (!isAbsolute(input.output)) {
+    throw new Error("capture output must be an absolute path");
+  }
   if (extname(input.output).toLowerCase() !== ".png") {
     throw new Error("capture output must end in .png");
   }
@@ -150,6 +221,8 @@ export async function writeCaptureArtifact(
   const imageTemporary = `${input.output}${suffix}`;
   const metadataOutput = `${input.output}.json`;
   const metadataTemporary = `${metadataOutput}${suffix}`;
+  let imagePublished = false;
+  let metadataPublished = false;
   try {
     await writeFile(imageTemporary, input.image, { flag: "wx" });
     await writeFile(
@@ -157,8 +230,24 @@ export async function writeCaptureArtifact(
       `${JSON.stringify(metadata, null, 2)}\n`,
       { encoding: "utf8", flag: "wx" },
     );
-    await rename(imageTemporary, input.output);
-    await rename(metadataTemporary, metadataOutput);
+    await link(metadataTemporary, metadataOutput);
+    metadataPublished = true;
+    await link(imageTemporary, input.output);
+    imagePublished = true;
+  } catch (error) {
+    await Promise.allSettled([
+      imagePublished ? unlink(input.output) : Promise.resolve(),
+      metadataPublished ? unlink(metadataOutput) : Promise.resolve(),
+    ]);
+    if (
+      error
+      && typeof error === "object"
+      && "code" in error
+      && error.code === "EEXIST"
+    ) {
+      throw new Error("capture output or metadata already exists");
+    }
+    throw error;
   } finally {
     await Promise.allSettled([
       unlink(imageTemporary),

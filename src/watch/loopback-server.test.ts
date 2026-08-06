@@ -3,6 +3,7 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
+import { onePixelPng } from "./capture-test-support";
 import { startLoopbackWatchServer } from "./loopback-server";
 import {
   CAPTURE_CONTROL_PATH,
@@ -14,17 +15,6 @@ import {
 
 const runtime = { htmlSha256: "html", mimDirty: false, mimRevision: "revision" };
 const temporaryDirectories: string[] = [];
-
-function png(width: number, height: number): Uint8Array<ArrayBuffer> {
-  const image = new Uint8Array(new ArrayBuffer(24));
-  image.set([137, 80, 78, 71, 13, 10, 26, 10]);
-  const view = new DataView(image.buffer);
-  view.setUint32(8, 13);
-  image.set([73, 72, 68, 82], 12);
-  view.setUint32(16, width);
-  view.setUint32(20, height);
-  return image;
-}
 
 afterEach(async () => {
   await Promise.all(temporaryDirectories.splice(0).map((path) => rm(path, {
@@ -44,6 +34,18 @@ async function readEvent(
     source += new TextDecoder().decode(next.value);
   }
   return source;
+}
+
+async function drainClosedStream(
+  reader: ReadableStreamDefaultReader<Uint8Array>,
+): Promise<void> {
+  try {
+    while (!(await reader.read()).done) {
+      // EventSource consumes continuously while the server is alive.
+    }
+  } catch {
+    // Forced server shutdown may reset the HTTP stream.
+  }
 }
 
 describe("loopback watch server", () => {
@@ -132,12 +134,12 @@ describe("loopback watch server", () => {
       expect(capture.revision).toBe(2);
 
       const browser: BrowserCaptureMetadata = {
-        cssHeight: 600,
-        cssWidth: 800,
+        cssHeight: 1,
+        cssWidth: 1,
         devicePixelRatio: 1,
         locale: "en-US",
-        pixelHeight: 600,
-        pixelWidth: 800,
+        pixelHeight: 1,
+        pixelWidth: 1,
         revision: 2,
         userAgent: "test browser",
         viewX: 0,
@@ -146,7 +148,7 @@ describe("loopback watch server", () => {
       };
       const form = new FormData();
       form.append("image", new Blob([
-        png(browser.pixelWidth, browser.pixelHeight),
+        onePixelPng(),
       ], { type: "image/png" }), "capture.png");
       form.append("metadata", JSON.stringify(browser));
       const upload = await fetch(new URL(captureResultPath(capture.id), server.url), {
@@ -207,6 +209,73 @@ describe("loopback watch server", () => {
       });
     } finally {
       await server.close();
+    }
+  });
+
+  test("fails closed for foreign origins, oversized controls, and ambiguous browsers", async () => {
+    const server = startLoopbackWatchServer({
+      html: "<main>mim</main>",
+      runtime,
+    });
+    const readers: Array<ReadableStreamDefaultReader<Uint8Array>> = [];
+
+    try {
+      server.publish({ revision: 1, source: ":mim 1\n" });
+      const foreign = await fetch(server.url, {
+        headers: { Origin: "https://example.com" },
+      });
+      expect(foreign.status).toBe(403);
+
+      const oversized = await fetch(new URL(CAPTURE_CONTROL_PATH, server.url), {
+        body: JSON.stringify({ output: `/tmp/${"x".repeat(9_000)}.png` }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+      expect(oversized.status).toBe(413);
+
+      const relative = await fetch(new URL(CAPTURE_CONTROL_PATH, server.url), {
+        body: JSON.stringify({ output: "frame.png" }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+      expect(relative.status).toBe(400);
+
+      const absent = await fetch(new URL(CAPTURE_CONTROL_PATH, server.url), {
+        body: JSON.stringify({ output: "/tmp/frame.png" }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+      expect(absent.status).toBe(409);
+      expect(await absent.json()).toEqual({
+        error: "capture requires exactly one connected browser; found 0",
+      });
+
+      const [first, second] = await Promise.all([
+        fetch(new URL(WATCH_EVENT_PATH, server.url)),
+        fetch(new URL(WATCH_EVENT_PATH, server.url)),
+      ]);
+      const firstReader = first.body?.getReader();
+      const secondReader = second.body?.getReader();
+      if (!firstReader || !secondReader) throw new Error("watch clients need bodies");
+      readers.push(firstReader, secondReader);
+      await Promise.all([
+        readEvent(firstReader, "mim-source"),
+        readEvent(secondReader, "mim-source"),
+      ]);
+
+      const ambiguous = await fetch(new URL(CAPTURE_CONTROL_PATH, server.url), {
+        body: JSON.stringify({ output: "/tmp/frame.png" }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+      expect(ambiguous.status).toBe(409);
+      expect(await ambiguous.json()).toEqual({
+        error: "capture requires exactly one connected browser; found 2",
+      });
+    } finally {
+      const drains = readers.map((reader) => drainClosedStream(reader));
+      await server.close();
+      await Promise.all(drains);
     }
   });
 });

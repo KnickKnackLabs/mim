@@ -80,7 +80,7 @@ The watched file is the only writer.
 `mise run mim:capture <watch-url> <output.png>` asks the single connected watch page for the exact painted revision.
 The canvas owns PNG extraction and painted-state metadata.
 The browser uploads to its same-origin loopback server.
-The server validates and atomically writes the PNG and JSON sidecar.
+The server validates PNG structure and checksums, then publishes the PNG and JSON sidecar without replacing an existing artifact.
 
 Metadata records the source and PNG hashes,
 source revision,

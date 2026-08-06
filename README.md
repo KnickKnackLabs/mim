@@ -37,6 +37,7 @@ mise run mim:watch experiment.mim --open
 mise run mim:watch examples/radial-residues-31.mim --open
 
 # Capture the current canvas from that live browser.
+# The PNG and its .json sidecar must not already exist.
 mise run mim:capture http://127.0.0.1:4312/?watch=1 /tmp/mim.png
 
 # Build and open the portable artifact.
@@ -57,16 +58,21 @@ Each program introduces one visual idea and keeps its explanation beside the sta
 
 ## Architecture
 
-| Owner             | Responsibility                                                              |
-| ----------------- | --------------------------------------------------------------------------- |
-| `src/core`        | State, semantic commands, reducer                                           |
-| `src/instruments` | Exact mathematics and display classifications                               |
-| `src/input`       | Keyboard and pointer input translated into commands                         |
-| `src/render`      | Canvas pixels from prepared display data                                    |
-| `src/ui`          | Svelte controls and Canvas host                                             |
-| `src/watch`       | File observation, live capture, and loopback transport                      |
-| `examples`        | Curated annotated programs and their owner-level validation                 |
-| `scripts`         | CLI lifecycle, standalone build, capture requests, and aggregate validation |
+| Owner                | Responsibility                                                              |
+| -------------------- | --------------------------------------------------------------------------- |
+| `src/core`           | Interaction state, semantic commands, reducer                               |
+| `src/language`       | Parsing, source spans, diagnostics, and formatting                          |
+| `src/program`        | Program structure, names, types, and validation                             |
+| `src/runtime`        | Expression evaluation and prepared frames                                   |
+| `src/browser`        | Browser program, editor, watch, and capture adapters                        |
+| `src/browser/canvas` | Program-driven Canvas painting                                              |
+| `src/instruments`    | Legacy instrument mathematics and display classifications                   |
+| `src/input`          | Keyboard and pointer input translated into commands                         |
+| `src/render`         | Shared layout and legacy rendering boundaries                               |
+| `src/ui`             | Svelte controls and Canvas host                                             |
+| `src/watch`          | File observation, live capture, and loopback transport                      |
+| `examples`           | Curated annotated programs and their owner-level validation                 |
+| `scripts`            | CLI lifecycle, standalone build, capture requests, and aggregate validation |
 
 ## Tasks
 

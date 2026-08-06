@@ -1,3 +1,5 @@
+import { extname, isAbsolute } from "node:path";
+
 import {
   parseBrowserCaptureMetadata,
   type CaptureRuntimeMetadata,
@@ -18,6 +20,7 @@ import {
 } from "./protocol";
 
 const LOOPBACK_HOST = "127.0.0.1";
+const MAX_CAPTURE_CONTROL_BYTES = 8 * 1024;
 const MAX_CAPTURE_UPLOAD_BYTES = 17 * 1024 * 1024;
 
 export interface LoopbackWatchServer {
@@ -41,6 +44,41 @@ function errorMessage(error: unknown): string {
 function errorResponse(error: unknown, defaultStatus = 500): Response {
   const status = error instanceof CaptureSessionError ? error.status : defaultStatus;
   return Response.json({ error: errorMessage(error) }, { status });
+}
+
+async function captureOutput(request: Request): Promise<string> {
+  const contentLengthSource = request.headers.get("content-length");
+  if (!contentLengthSource) {
+    throw new CaptureSessionError("capture request requires a content length", 411);
+  }
+  const contentLength = Number(contentLengthSource);
+  if (!Number.isSafeInteger(contentLength) || contentLength < 1) {
+    throw new CaptureSessionError("capture request content length is invalid", 400);
+  }
+  if (contentLength > MAX_CAPTURE_CONTROL_BYTES) {
+    throw new CaptureSessionError("capture request is too large", 413);
+  }
+  if (!request.headers.get("content-type")?.startsWith("application/json")) {
+    throw new CaptureSessionError("capture request must be JSON", 415);
+  }
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    throw new CaptureSessionError("capture request is not valid JSON", 400);
+  }
+  const output = (body as { output?: unknown } | null)?.output;
+  if (
+    typeof output !== "string"
+    || output.length < 1
+    || output.length > 4_096
+    || !isAbsolute(output)
+    || extname(output).toLowerCase() !== ".png"
+  ) {
+    throw new CaptureSessionError("capture output path is invalid", 400);
+  }
+  return output;
 }
 
 async function captureUpload(
@@ -152,22 +190,11 @@ export function startLoopbackWatchServer(
       }
 
       if (url.pathname === CAPTURE_CONTROL_PATH && request.method === "POST") {
-        let body: unknown;
         try {
-          body = await request.json();
-        } catch {
-          return errorResponse(new CaptureSessionError("capture request is not valid JSON", 400));
-        }
-        const output = (body as { output?: unknown } | null)?.output;
-        if (typeof output !== "string" || output.length < 1 || output.length > 4_096) {
-          return errorResponse(new CaptureSessionError("capture output path is invalid", 400));
-        }
-        if (latest && !latestAccepted) {
-          return errorResponse(
-            new CaptureSessionError("watched source is invalid", 409),
-          );
-        }
-        try {
+          const output = await captureOutput(request);
+          if (latest && !latestAccepted) {
+            throw new CaptureSessionError("watched source is invalid", 409);
+          }
           return Response.json(await captures.request(output, latest));
         } catch (error) {
           return errorResponse(error);
@@ -216,8 +243,9 @@ export function startLoopbackWatchServer(
   return {
     url: new URL(`http://${LOOPBACK_HOST}:${server.port}/?watch=1`),
     async close(): Promise<void> {
-      captures.close();
-      for (const client of clients.keys()) {
+      await captures.close();
+      const stopping = server.stop(true);
+      for (const client of [...clients.keys()]) {
         try {
           client.close();
         } catch {
@@ -226,7 +254,7 @@ export function startLoopbackWatchServer(
         disconnect(client);
       }
       clients.clear();
-      await server.stop(true);
+      await stopping;
     },
     publish(update, accepted = true): void {
       captures.sourceAdvanced(update.revision);

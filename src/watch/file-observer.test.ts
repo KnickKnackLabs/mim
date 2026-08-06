@@ -19,6 +19,29 @@ async function waitFor(predicate: () => boolean): Promise<void> {
 }
 
 describe("program file observation", () => {
+  test("rereads after watcher installation to close the initial-read gap", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "mim-watch-"));
+    const path = join(directory, "experiment.mim");
+    await writeFile(path, "changed during setup");
+    cleanups.push(() => rm(directory, { force: true, recursive: true }));
+
+    const sources: string[] = [];
+    const observer = observeProgramFile(path, {
+      debounceMs: 10,
+      initialSource: "stale initial read",
+      onError: (error) => {
+        throw error;
+      },
+      onSource: (source) => {
+        sources.push(source);
+      },
+    });
+    cleanups.push(() => observer.close());
+
+    await waitFor(() => sources.length === 1);
+    expect(sources).toEqual(["changed during setup"]);
+  });
+
   test("coalesces rapid writes, follows atomic replacement, and closes", async () => {
     const directory = await mkdtemp(join(tmpdir(), "mim-watch-"));
     const path = join(directory, "experiment.mim");
