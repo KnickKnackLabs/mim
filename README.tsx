@@ -130,7 +130,7 @@ mise run mim`}</CodeBlock>
         {"Each program introduces one visual idea and keeps its explanation beside the statements it clarifies. The standalone browser bundles the complete library: use "}<Code>Examples</Code>{" or "}<Code>:example &lt;name&gt;</Code>{" to load full annotated source, or open a file through "}<Code>mim:watch</Code>{" with an ordinary text editor. Programs with "}<Code>:vary</Code>{" expose play, restart, and bounded-speed controls."}
       </Paragraph>
       <Paragraph>
-        {"Continuous tracks use "}<Code>:vary phase from 0 to 31 over 8s loop</Code>{". Discrete tracks use explicit values or finite inclusive generators, such as "}<Code>:vary p through primes(2, 31) every 500ms pingpong</Code>{". Available generators are "}<Code>integers</Code>{", "}<Code>evens</Code>{", and "}<Code>primes</Code>{"."}
+        {"Continuous tracks use "}<Code>:vary phase from 0 to 31 over 8s loop</Code>{". Discrete tracks use explicit values or finite inclusive generators. Choose per-value timing with "}<Code>every</Code>{", or total timing with "}<Code>:vary p through primes(2, 71) over 10s loop</Code>{". For "}<Code>loop</Code>{", "}<Code>over</Code>{" covers one complete cycle. For "}<Code>once</Code>{" and "}<Code>pingpong</Code>{", it covers the first-to-last traversal; the pingpong return takes the same time. Available generators are "}<Code>integers</Code>{", "}<Code>evens</Code>{", and "}<Code>primes</Code>{"."}
       </Paragraph>
       <Table>
         <TableHead><Cell>Program</Cell><Cell>What it shows</Cell></TableHead>

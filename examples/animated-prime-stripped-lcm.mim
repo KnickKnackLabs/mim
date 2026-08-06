@@ -6,8 +6,8 @@
 # Prime parameters may move only through values that preserve their type.
 :param p prime = 2
 
-# Visit every prime from 2 through 31, then return without repeating endpoints.
-:vary p through primes(2, 31) every 500ms pingpong
+# Visit every prime from 2 through 71 during one 10-second loop.
+:vary p through primes(2, 71) over 10s loop
 
 # Signed integer axes keep zero at the visual center.
 :axis x integers

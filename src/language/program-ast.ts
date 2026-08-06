@@ -47,13 +47,17 @@ export interface GeneratedVariationSequence {
 
 export type VariationSequence = ExplicitVariationSequence | GeneratedVariationSequence;
 
+export type DiscreteVariationTiming =
+  | { kind: "every"; seconds: number }
+  | { kind: "over"; seconds: number };
+
 export interface DiscreteVariationStatement extends StatementBase {
-  everySeconds: number;
   form: "discrete";
   kind: "variation";
   mode: string;
   parameter: string;
   sequence: VariationSequence;
+  timing: DiscreteVariationTiming;
 }
 
 export type VariationStatement = DiscreteVariationStatement | LinearVariationStatement;

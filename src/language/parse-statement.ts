@@ -81,18 +81,26 @@ export function parseStatement(
 
     if (form === "through") {
       const sequence = parseVariationSequence(reader);
-      reader.keyword("every");
-      const everySeconds = reader.durationSeconds("step duration");
+      const timingKind = reader.identifier("variation timing");
+      if (timingKind !== "every" && timingKind !== "over") {
+        throw new SyntaxFailure(
+          `expected variation timing "every" or "over"`,
+          span,
+        );
+      }
+      const seconds = reader.durationSeconds(
+        timingKind === "every" ? "step duration" : "total duration",
+      );
       const mode = reader.identifier("variation mode");
       reader.finish();
       return {
-        everySeconds,
         form: "discrete",
         kind: "variation",
         mode,
         parameter,
         sequence,
         span,
+        timing: { kind: timingKind, seconds },
       };
     }
 

@@ -46,7 +46,7 @@ describe("formatProgram", () => {
       ":param p prime = 2",
       ":vary p through 2,3,5,7 every .5s pingpong",
       ":param n number = -2",
-      ":vary n through integers(-2,2) every 1000ms loop",
+      ":vary n through integers(-2,2) over 10000ms loop",
       "",
     ].join("\n");
     const canonical = [
@@ -54,7 +54,7 @@ describe("formatProgram", () => {
       ":param p prime = 2",
       ":vary p through 2, 3, 5, 7 every 500ms pingpong",
       ":param n number = -2",
-      ":vary n through integers(-2, 2) every 1s loop",
+      ":vary n through integers(-2, 2) over 10s loop",
       "",
     ].join("\n");
 
