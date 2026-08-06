@@ -8,25 +8,28 @@
   export let select: (name: string) => void;
   export let selectedName: string | null = null;
 
+  let dialog: HTMLDialogElement;
   let rows: HTMLButtonElement[] = [];
 
-  onMount(() => rows[0]?.focus());
+  onMount(() => {
+    dialog.showModal();
+    rows[0]?.focus();
+    return () => {
+      if (dialog.open) dialog.close();
+    };
+  });
 
-  function handleWindowKeydown(event: KeyboardEvent): void {
-    if (event.defaultPrevented || event.key !== "Escape") return;
+  function handleCancel(event: Event): void {
     event.preventDefault();
-    event.stopImmediatePropagation();
     close();
   }
 </script>
 
-<svelte:window on:keydown|capture={handleWindowKeydown} />
-
-<div
+<dialog
   aria-labelledby="example-picker-title"
-  aria-modal="true"
+  bind:this={dialog}
   class="example-picker"
-  role="dialog"
+  on:cancel={handleCancel}
 >
   <header>
     <div>
@@ -58,4 +61,4 @@
     <code>:example &lt;name&gt;</code>
     <span><kbd>Esc</kbd> close</span>
   </footer>
-</div>
+</dialog>
