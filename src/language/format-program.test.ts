@@ -40,6 +40,28 @@ describe("formatProgram", () => {
     expect(formatProgram(parsed(canonical))).toBe(canonical);
   });
 
+  test("writes discrete values, generators, and millisecond durations", () => {
+    const source = [
+      ":mim 1",
+      ":param p prime = 2",
+      ":vary p through 2,3,5,7 every .5s pingpong",
+      ":param n number = -2",
+      ":vary n through integers(-2,2) over 10000ms loop",
+      "",
+    ].join("\n");
+    const canonical = [
+      ":mim 1",
+      ":param p prime = 2",
+      ":vary p through 2, 3, 5, 7 every 500ms pingpong",
+      ":param n number = -2",
+      ":vary n through integers(-2, 2) over 10s loop",
+      "",
+    ].join("\n");
+
+    expect(formatProgram(parsed(source))).toBe(canonical);
+    expect(formatProgram(parsed(canonical))).toBe(canonical);
+  });
+
   test("preserves whole-line and inline comments while canonicalizing source", () => {
     const source = `
       # Radial residues.

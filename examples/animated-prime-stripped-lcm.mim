@@ -1,0 +1,22 @@
+# Prime-stripped LCM pulse
+# A discrete prime track reveals how each prime organizes the LCM lattice.
+
+:mim 1
+
+# Prime parameters may move only through values that preserve their type.
+:param p prime = 2
+
+# Visit every prime from 2 through 71 during one 10-second loop.
+:vary p through primes(2, 71) over 10s loop
+
+# Signed integer axes keep zero at the visual center.
+:axis x integers
+:axis y integers
+
+# Remove the complete power of the current prime from each LCM value.
+:field lcm(x, y)
+:lens strip(value, p)
+:color exact(lens)
+
+# Equality is not part of this instrument.
+:overlay equality off

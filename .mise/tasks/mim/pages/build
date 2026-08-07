@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+#MISE description="Build the static GitHub Pages artifact"
+#MISE dir="{{config_root}}"
+#USAGE example "mise run mim:pages:build" header="Build dist/index.html"
+set -euo pipefail
+
+exec bun run build:pages

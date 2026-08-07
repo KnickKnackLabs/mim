@@ -1,4 +1,4 @@
-# Animated radial residues modulo 31
+# Radial residue drift modulo 31
 # A native variation moves the radial field through one seamless modular period.
 
 :mim 1

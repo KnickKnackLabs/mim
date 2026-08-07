@@ -9,7 +9,7 @@ Modular source. One portable HTML artifact.
 ![UI: Svelte](https://img.shields.io/badge/UI-Svelte-ff3e00?style=flat)
 ![core: TypeScript](https://img.shields.io/badge/core-TypeScript-3178c6?style=flat)
 ![renderer: Canvas 2D](https://img.shields.io/badge/renderer-Canvas%202D-175e7a?style=flat)
-![unit suites: 59](https://img.shields.io/badge/unit%20suites-59-brightgreen?style=flat)
+![unit suites: 63](https://img.shields.io/badge/unit%20suites-63-brightgreen?style=flat)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue?style=flat)](LICENSE)
 
 </div>
@@ -49,22 +49,34 @@ mise run mim
 
 ## Annotated examples
 
-Each program introduces one visual idea and keeps its explanation beside the statements it clarifies. Open any file through `mim:watch` and edit it with an ordinary text editor. Programs with `:vary` expose play, restart, and bounded-speed controls.
+Each program introduces one visual idea and keeps its explanation beside the statements it clarifies. The standalone browser bundles the complete library: use `Examples` or `:example <name>` to load full annotated source, or open a file through `mim:watch` with an ordinary text editor. Programs with `:vary` expose play, restart, and bounded-speed controls.
 
-| Program                                    | What it shows                                                                                                          |
-| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
-| `examples/animated-radial-residues-31.mim` | **Animated radial residues modulo 31**. A native variation moves the radial field through one seamless modular period. |
-| `examples/dyadic-lcm-depth.mim`            | **Dyadic LCM depth**. Powers of two become a nested plaid of divisibility bands.                                       |
-| `examples/gcd-lattice.mim`                 | **GCD lattice**. Common divisors form symmetric bands across the signed integer grid.                                  |
-| `examples/prime-stripped-lcm.mim`          | **Prime-stripped LCM**. Remove one chosen prime's complete contribution from an LCM field.                             |
-| `examples/radial-residues-31.mim`          | **Radial residues modulo 31**. Squared distance folded by a prime forms repeating targets and curved bands.            |
-| `examples/xor-interference.mim`            | **XOR interference**. Binary differences produce nested diamonds, bands, and checker textures.                         |
+Continuous tracks use `:vary phase from 0 to 31 over 8s loop`. Discrete tracks use explicit values or finite inclusive generators. Choose per-value timing with `every`, or total timing with `:vary p through primes(2, 71) over 10s loop`. For `loop`, `over` covers one complete cycle. For `once` and `pingpong`, it covers the first-to-last traversal; the pingpong return takes the same time. Available generators are `integers`, `evens`, and `primes`.
+
+| Program                                          | What it shows                                                                                                      |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| `examples/animated-cubic-quadratic-residues.mim` | **Cubic and quadratic residue waves**. A moving target reveals finite-field level sets hidden inside x³ + y².      |
+| `examples/animated-radial-residues-31.mim`       | **Radial residue drift modulo 31**. A native variation moves the radial field through one seamless modular period. |
+| `examples/animated-two-axis-orbit.mim`           | **Two-axis orbit**. Two independent clocks move a radial field along a changing path.                              |
+| `examples/animated-hyperbolic-residues.mim`      | **Hyperbolic residues**. Difference-of-squares contours flow through a modular period.                             |
+| `examples/animated-modular-multiplication.mim`   | **Modular multiplication**. A moving multiplication table wraps every value around the prime 31.                   |
+| `examples/animated-prime-stripped-lcm.mim`       | **Prime-stripped LCM pulse**. A discrete prime track reveals how each prime organizes the LCM lattice.             |
+| `examples/radial-residues-31.mim`                | **Radial residues modulo 31**. Squared distance folded by a prime forms repeating targets and curved bands.        |
+| `examples/gcd-lattice.mim`                       | **GCD lattice**. Common divisors form symmetric bands across the signed integer grid.                              |
+| `examples/dyadic-lcm-depth.mim`                  | **Dyadic LCM depth**. Powers of two become a nested plaid of divisibility bands.                                   |
+| `examples/prime-stripped-lcm.mim`                | **Prime-stripped LCM**. Remove one chosen prime's complete contribution from an LCM field.                         |
+| `examples/xor-interference.mim`                  | **XOR interference**. Binary differences produce nested diamonds, bands, and checker textures.                     |
+
+## Static site
+
+The standalone artifact includes the editor, annotated example library, and native variation playback without a server. Build the GitHub Pages entry point with `mise run mim:pages:build`; it publishes the validated standalone bytes as `dist/index.html`. File watching and server-assisted capture remain local development tools.
 
 ## Architecture
 
 | Owner                | Responsibility                                                              |
 | -------------------- | --------------------------------------------------------------------------- |
 | `src/core`           | Interaction state, semantic commands, reducer                               |
+| `src/examples`       | Curated manifest, source-owned metadata, and browser library                |
 | `src/language`       | Parsing, source spans, diagnostics, and formatting                          |
 | `src/program`        | Program structure, names, types, and validation                             |
 | `src/runtime`        | Expression evaluation and prepared frames                                   |
@@ -81,16 +93,17 @@ Each program introduces one visual idea and keeps its explanation beside the sta
 
 ## Tasks
 
-| Task                   | Description                                                |
-| ---------------------- | ---------------------------------------------------------- |
-| `mise run bats`        | Run BATS task-boundary tests                               |
-| `mise run doctor`      | Check local development setup                              |
-| `mise run mim`         | Build and open the standalone mim instrument               |
-| `mise run mim:build`   | Build the standalone mim HTML artifact                     |
-| `mise run mim:capture` | Capture the current canvas from one live mim watch session |
-| `mise run mim:dev`     | Run the mim development server                             |
-| `mise run mim:watch`   | Watch one .mim program in a persistent browser             |
-| `mise run test`        | Run the complete mim validation path                       |
+| Task                       | Description                                                |
+| -------------------------- | ---------------------------------------------------------- |
+| `mise run bats`            | Run BATS task-boundary tests                               |
+| `mise run doctor`          | Check local development setup                              |
+| `mise run mim`             | Build and open the standalone mim instrument               |
+| `mise run mim:build`       | Build the standalone mim HTML artifact                     |
+| `mise run mim:capture`     | Capture the current canvas from one live mim watch session |
+| `mise run mim:dev`         | Run the mim development server                             |
+| `mise run mim:pages:build` | Build the static GitHub Pages artifact                     |
+| `mise run mim:watch`       | Watch one .mim program in a persistent browser             |
+| `mise run test`            | Run the complete mim validation path                       |
 
 ## Validation
 

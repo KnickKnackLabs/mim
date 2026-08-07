@@ -1,0 +1,20 @@
+# Cubic and quadratic residue waves
+# A moving target reveals finite-field level sets hidden inside x³ + y².
+
+:mim 1
+
+:param target number = 0
+:vary target from 0 to 31 over 12s loop
+
+:axis x integers
+:axis y integers
+
+# Keep the polynomial fixed so its geometry remains stable through time.
+:field mod(x * x * x + y * y, 31)
+
+# Measure circular distance from each residue to the moving target.
+# Invert the distance so the selected modular level set glows brightest.
+:lens 15.5 - min(mod(value - target, 31), mod(target - value, 31))
+
+:color magnitude(lens)
+:overlay equality off

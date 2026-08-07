@@ -1,5 +1,17 @@
 import { formatExpression } from "./format-expression";
-import type { ProgramAst, ProgramStatement } from "./program-ast";
+import type { ProgramAst, ProgramStatement, VariationSequence } from "./program-ast";
+
+function formatDuration(seconds: number): string {
+  const milliseconds = seconds * 1_000;
+  return seconds < 1 && Number.isInteger(milliseconds)
+    ? `${milliseconds}ms`
+    : `${seconds}s`;
+}
+
+function formatVariationSequence(sequence: VariationSequence): string {
+  if (sequence.kind === "explicit") return sequence.values.join(", ");
+  return `${sequence.generator}(${sequence.from}, ${sequence.to})`;
+}
 
 function formatStatement(statement: ProgramStatement): string {
   if (statement.kind === "mim") return `:mim ${statement.version}`;
@@ -7,7 +19,10 @@ function formatStatement(statement: ProgramStatement): string {
     return `:param ${statement.name} ${statement.parameterType} = ${formatExpression(statement.initial)}`;
   }
   if (statement.kind === "variation") {
-    return `:vary ${statement.parameter} from ${statement.from} to ${statement.to} over ${statement.durationSeconds}s ${statement.mode}`;
+    if (statement.form === "linear") {
+      return `:vary ${statement.parameter} from ${statement.from} to ${statement.to} over ${formatDuration(statement.durationSeconds)} ${statement.mode}`;
+    }
+    return `:vary ${statement.parameter} through ${formatVariationSequence(statement.sequence)} ${statement.timing.kind} ${formatDuration(statement.timing.seconds)} ${statement.mode}`;
   }
   if (statement.kind === "axis") {
     return `:axis ${statement.axis} ${formatExpression(statement.definition)}`;

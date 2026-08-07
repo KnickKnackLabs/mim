@@ -1,0 +1,18 @@
+# Modular multiplication
+# A moving multiplication table wraps every value around the prime 31.
+
+:mim 1
+
+:param phase number = 0
+:vary phase from 0 to 31 over 9s loop
+
+:axis x integers
+:axis y integers
+
+# Each row multiplies y by a continuously shifting x coordinate.
+:field mod((x + phase) * y, 31)
+:lens value
+
+# Exact coloring gives each remainder its own hue.
+:color exact(lens)
+:overlay equality off

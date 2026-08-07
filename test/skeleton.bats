@@ -13,6 +13,8 @@ load test_helper
     src/App.svelte \
     .mise/tasks/test \
     .mise/tasks/mim/build \
+    .mise/tasks/mim/pages/build \
+    .github/workflows/pages.yml \
     .github/workflows/test.yml
   do
     [ -e "$REPO_DIR/$path" ]
@@ -69,4 +71,21 @@ SH
   run mim mim:build
   [ "$status" -eq 0 ]
   [ "$(cat "$log")" = "run build" ]
+}
+
+@test "Pages build task reaches the package Pages boundary" {
+  mock_dir="$BATS_TEST_TMPDIR/mock-pages-bin"
+  log="$BATS_TEST_TMPDIR/bun-pages.log"
+  mkdir -p "$mock_dir"
+  cat > "$mock_dir/bun" <<'SH'
+#!/usr/bin/env bash
+printf '%s\n' "$*" > "$BUN_LOG"
+SH
+  chmod +x "$mock_dir/bun"
+  export BUN_LOG="$log"
+  export PATH="$mock_dir:$PATH"
+
+  run mim mim:pages:build
+  [ "$status" -eq 0 ]
+  [ "$(cat "$log")" = "run build:pages" ]
 }

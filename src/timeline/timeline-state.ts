@@ -1,4 +1,5 @@
 import type { VariationPlan } from "../program";
+import { variationCompletionSeconds } from "./variation-duration";
 
 export const MIN_TIMELINE_SPEED = 0.25;
 export const MAX_TIMELINE_SPEED = 4;
@@ -114,6 +115,9 @@ export function timelineHasFutureVariation(
     throw new RangeError("timeline elapsed time must be finite and nonnegative");
   }
   return variations.some(
-    (variation) => variation.mode !== "once" || elapsedSeconds < variation.durationSeconds,
+    (variation) => (
+      variation.mode !== "once"
+      || elapsedSeconds < variationCompletionSeconds(variation)
+    ),
   );
 }

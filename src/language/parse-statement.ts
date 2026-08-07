@@ -1,6 +1,22 @@
-import type { ProgramStatement } from "./program-ast";
+import type { ProgramStatement, VariationSequence } from "./program-ast";
 import { SyntaxFailure } from "./diagnostics";
 import { LineReader } from "./line-reader";
+
+function parseVariationSequence(reader: LineReader): VariationSequence {
+  if (reader.nextIsNumber()) {
+    const values = [reader.number("variation value")];
+    while (reader.consume(",")) values.push(reader.number("variation value"));
+    return { kind: "explicit", values };
+  }
+
+  const generator = reader.identifier("variation generator");
+  reader.expect("(");
+  const from = reader.number("generator starting value");
+  reader.expect(",");
+  const to = reader.number("generator ending value");
+  reader.expect(")");
+  return { from, generator, kind: "generated", to };
+}
 
 export function parseStatement(
   text: string,
@@ -41,16 +57,57 @@ export function parseStatement(
 
   if (name === "vary") {
     const parameter = reader.identifier("parameter name");
-    reader.keyword("from");
-    const from = reader.number("starting value");
-    reader.keyword("to");
-    const to = reader.number("ending value");
-    reader.keyword("over");
-    const durationSeconds = reader.number("duration");
-    reader.expect("s");
-    const mode = reader.identifier("variation mode");
-    reader.finish();
-    return { durationSeconds, from, kind: "variation", mode, parameter, span, to };
+    const form = reader.identifier("variation form");
+
+    if (form === "from") {
+      const from = reader.number("starting value");
+      reader.keyword("to");
+      const to = reader.number("ending value");
+      reader.keyword("over");
+      const durationSeconds = reader.durationSeconds("duration");
+      const mode = reader.identifier("variation mode");
+      reader.finish();
+      return {
+        durationSeconds,
+        form: "linear",
+        from,
+        kind: "variation",
+        mode,
+        parameter,
+        span,
+        to,
+      };
+    }
+
+    if (form === "through") {
+      const sequence = parseVariationSequence(reader);
+      const timingKind = reader.identifier("variation timing");
+      if (timingKind !== "every" && timingKind !== "over") {
+        throw new SyntaxFailure(
+          `expected variation timing "every" or "over"`,
+          span,
+        );
+      }
+      const seconds = reader.durationSeconds(
+        timingKind === "every" ? "step duration" : "total duration",
+      );
+      const mode = reader.identifier("variation mode");
+      reader.finish();
+      return {
+        form: "discrete",
+        kind: "variation",
+        mode,
+        parameter,
+        sequence,
+        span,
+        timing: { kind: timingKind, seconds },
+      };
+    }
+
+    throw new SyntaxFailure(
+      `unknown variation form ${JSON.stringify(form)}`,
+      span,
+    );
   }
 
   if (name === "field" || name === "lens" || name === "color") {

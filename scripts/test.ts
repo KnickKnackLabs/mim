@@ -9,7 +9,7 @@ const repoRoot = resolve(import.meta.dir, "..");
 const steps: Step[] = [
   { name: "unit", command: [process.execPath, "test"] },
   { name: "svelte", command: [process.execPath, "run", "check"] },
-  { name: "standalone build", command: [process.execPath, "run", "build"] },
+  { name: "standalone Pages build", command: [process.execPath, "run", "build:pages"] },
   { name: "BATS", command: ["mise", "run", "bats"] },
 ];
 

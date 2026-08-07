@@ -16,6 +16,7 @@ function once(durationSeconds: number): VariationPlan {
   return {
     durationSeconds,
     from: 0,
+    kind: "linear",
     mode: "once",
     parameter: "phase",
     span,
@@ -86,5 +87,18 @@ describe("deterministic timeline state", () => {
       once(2),
       { ...once(2), mode: "loop", parameter: "looping" },
     ], 100)).toBe(true);
+  });
+
+  test("uses the last discrete step as once completion", () => {
+    const variation: VariationPlan = {
+      everySeconds: 0.5,
+      kind: "discrete",
+      mode: "once",
+      parameter: "p",
+      span,
+      values: [2, 3, 5, 7],
+    };
+    expect(timelineHasFutureVariation([variation], 1.499)).toBe(true);
+    expect(timelineHasFutureVariation([variation], 1.5)).toBe(false);
   });
 });

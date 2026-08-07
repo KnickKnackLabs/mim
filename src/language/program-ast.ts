@@ -23,14 +23,44 @@ export interface AxisStatement extends StatementBase {
   kind: "axis";
 }
 
-export interface VariationStatement extends StatementBase {
+export interface LinearVariationStatement extends StatementBase {
   durationSeconds: number;
+  form: "linear";
   from: number;
   kind: "variation";
   mode: string;
   parameter: string;
   to: number;
 }
+
+export interface ExplicitVariationSequence {
+  kind: "explicit";
+  values: number[];
+}
+
+export interface GeneratedVariationSequence {
+  from: number;
+  generator: string;
+  kind: "generated";
+  to: number;
+}
+
+export type VariationSequence = ExplicitVariationSequence | GeneratedVariationSequence;
+
+export type DiscreteVariationTiming =
+  | { kind: "every"; seconds: number }
+  | { kind: "over"; seconds: number };
+
+export interface DiscreteVariationStatement extends StatementBase {
+  form: "discrete";
+  kind: "variation";
+  mode: string;
+  parameter: string;
+  sequence: VariationSequence;
+  timing: DiscreteVariationTiming;
+}
+
+export type VariationStatement = DiscreteVariationStatement | LinearVariationStatement;
 
 export interface FieldStatement extends StatementBase {
   expression: Expression;

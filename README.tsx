@@ -3,6 +3,9 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 
+import { EXAMPLE_FILES } from "./src/examples/example-manifest";
+import { parseExampleMetadata } from "./src/examples/example-metadata";
+
 import {
   Badge,
   Badges,
@@ -45,19 +48,16 @@ function walk(dir: string): string[] {
 
 function examples(): ExampleInfo[] {
   const exampleRoot = join(repoRoot, "examples");
-  return readdirSync(exampleRoot, { withFileTypes: true })
-    .filter((entry) => entry.isFile() && entry.name.endsWith(".mim"))
-    .map((entry) => {
-      const path = join(exampleRoot, entry.name);
-      const [titleLine, descriptionLine] = readFileSync(path, "utf8").split("\n");
-      const title = titleLine?.match(/^# (.+)$/)?.[1];
-      const description = descriptionLine?.match(/^# (.+)$/)?.[1];
-      if (!title || !description) {
-        throw new Error(`${entry.name} must begin with title and description comments`);
-      }
-      return { description, path: `examples/${entry.name}`, title };
-    })
-    .sort((left, right) => left.path.localeCompare(right.path));
+  const discovered = readdirSync(exampleRoot)
+    .filter((name) => name.endsWith(".mim"))
+    .sort();
+  if (discovered.join("\n") !== [...EXAMPLE_FILES].sort().join("\n")) {
+    throw new Error("curated example manifest does not match examples/*.mim");
+  }
+  return EXAMPLE_FILES.map((file) => {
+    const metadata = parseExampleMetadata(file, readFileSync(join(exampleRoot, file), "utf8"));
+    return { ...metadata, path: `examples/${file}` };
+  });
 }
 
 function tasks(): TaskInfo[] {
@@ -127,7 +127,10 @@ mise run mim`}</CodeBlock>
 
     <Section title="Annotated examples">
       <Paragraph>
-        {"Each program introduces one visual idea and keeps its explanation beside the statements it clarifies. Open any file through "}<Code>mim:watch</Code>{" and edit it with an ordinary text editor. Programs with "}<Code>:vary</Code>{" expose play, restart, and bounded-speed controls."}
+        {"Each program introduces one visual idea and keeps its explanation beside the statements it clarifies. The standalone browser bundles the complete library: use "}<Code>Examples</Code>{" or "}<Code>:example &lt;name&gt;</Code>{" to load full annotated source, or open a file through "}<Code>mim:watch</Code>{" with an ordinary text editor. Programs with "}<Code>:vary</Code>{" expose play, restart, and bounded-speed controls."}
+      </Paragraph>
+      <Paragraph>
+        {"Continuous tracks use "}<Code>:vary phase from 0 to 31 over 8s loop</Code>{". Discrete tracks use explicit values or finite inclusive generators. Choose per-value timing with "}<Code>every</Code>{", or total timing with "}<Code>:vary p through primes(2, 71) over 10s loop</Code>{". For "}<Code>loop</Code>{", "}<Code>over</Code>{" covers one complete cycle. For "}<Code>once</Code>{" and "}<Code>pingpong</Code>{", it covers the first-to-last traversal; the pingpong return takes the same time. Available generators are "}<Code>integers</Code>{", "}<Code>evens</Code>{", and "}<Code>primes</Code>{"."}
       </Paragraph>
       <Table>
         <TableHead><Cell>Program</Cell><Cell>What it shows</Cell></TableHead>
@@ -140,10 +143,17 @@ mise run mim`}</CodeBlock>
       </Table>
     </Section>
 
+    <Section title="Static site">
+      <Paragraph>
+        {"The standalone artifact includes the editor, annotated example library, and native variation playback without a server. Build the GitHub Pages entry point with "}<Code>mise run mim:pages:build</Code>{"; it publishes the validated standalone bytes as "}<Code>dist/index.html</Code>{". File watching and server-assisted capture remain local development tools."}
+      </Paragraph>
+    </Section>
+
     <Section title="Architecture">
       <Table>
         <TableHead><Cell>Owner</Cell><Cell>Responsibility</Cell></TableHead>
         <TableRow><Cell><Code>src/core</Code></Cell><Cell>Interaction state, semantic commands, reducer</Cell></TableRow>
+        <TableRow><Cell><Code>src/examples</Code></Cell><Cell>Curated manifest, source-owned metadata, and browser library</Cell></TableRow>
         <TableRow><Cell><Code>src/language</Code></Cell><Cell>Parsing, source spans, diagnostics, and formatting</Cell></TableRow>
         <TableRow><Cell><Code>src/program</Code></Cell><Cell>Program structure, names, types, and validation</Cell></TableRow>
         <TableRow><Cell><Code>src/runtime</Code></Cell><Cell>Expression evaluation and prepared frames</Cell></TableRow>

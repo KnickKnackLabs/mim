@@ -8,6 +8,14 @@ export interface WindowKeyState {
   visible: boolean;
 }
 
+export function hasUnappliedProgramDraft(
+  draft: string,
+  source: string,
+  readOnly: boolean,
+): boolean {
+  return !readOnly && draft !== source;
+}
+
 export function programEditorWindowAction(state: WindowKeyState): ProgramEditorWindowAction {
   if (state.defaultPrevented) return null;
   if (state.visible) return state.key === "Escape" ? "close" : null;

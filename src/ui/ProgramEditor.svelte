@@ -2,14 +2,18 @@
   import { onDestroy, tick } from "svelte";
 
   import type { BrowserProgramDiagnostic } from "../browser/browser-program";
+  import { exampleCommandDraft } from "../browser/example-command";
   import type { BrowserProgramFormatResult } from "../browser/format-browser-program";
   import {
+    hasUnappliedProgramDraft,
     programEditorInputAction,
     programEditorWindowAction,
   } from "./program-editor-keys";
 
+  export let active = true;
   export let apply: (source: string) => readonly BrowserProgramDiagnostic[];
   export let format: (source: string) => BrowserProgramFormatResult;
+  export let openExamples: (() => void) | null = null;
   export let readOnly = false;
   export let reportedDiagnostics: readonly BrowserProgramDiagnostic[] = [];
   export let source: string;
@@ -48,8 +52,12 @@
     textarea.focus();
   }
 
-  function close(): void {
+  export function close(): void {
     visible = false;
+  }
+
+  export function hasUnappliedDraft(): boolean {
+    return hasUnappliedProgramDraft(draft, source, readOnly);
   }
 
   function cancelPending(): void {
@@ -69,6 +77,7 @@
     if (readOnly) return;
     stale = draft !== source;
     cancelPending();
+    if (exampleCommandDraft(draft)) return;
     pending = setTimeout(applyDraft, 180);
   }
 
@@ -85,6 +94,7 @@
   }
 
   function handleWindowKeydown(event: KeyboardEvent): void {
+    if (!active) return;
     const action = programEditorWindowAction({
       defaultPrevented: event.defaultPrevented,
       editableTarget: editableTarget(event.target),
@@ -126,6 +136,9 @@
             : "valid · live"}</span>
       </div>
       <div class="program-editor-actions">
+        {#if !readOnly && openExamples}
+          <button type="button" on:click={openExamples}>Examples</button>
+        {/if}
         {#if !readOnly}<button type="button" on:click={formatDraft}>Format</button>{/if}
         <button type="button" on:click={close}>Close</button>
       </div>
@@ -156,7 +169,7 @@
         <span>the watched file is authoritative</span>
         <span>read only · <kbd>Esc</kbd> close</span>
       {:else}
-        <span>valid edits apply automatically</span>
+        <span>valid edits apply automatically · <code>:example &lt;name&gt;</code></span>
         <span><kbd>⌘/Ctrl Enter</kbd> apply now · <kbd>Esc</kbd> close</span>
       {/if}
     </footer>
